@@ -1,159 +1,149 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, StyleSheet } from "react-native";
-import { Eye, EyeOff } from "lucide-react-native";
+import { View, Text, TouchableOpacity, TextInput, StyleSheet } from "react-native";
 
-export default function Login() {
-  const [formData, setFormData] = useState({ documento: "", password: "" });
-  const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-
-  // 👇 Para ejemplo fijo (puedes pasarlo como prop luego)
-  const selectedUserType = "recepcionista";
-
-  const getDocumentLabel = () => {
-    switch (selectedUserType) {
-      case "paciente":
-        return "Número de Documento";
-      case "doctor":
-        return "Código de Médico";
-      case "recepcionista":
-        return "ID de Usuario";
-      default:
-        return "Documento";
-    }
-  };
-
-  const getDocumentPlaceholder = () => {
-    switch (selectedUserType) {
-      case "paciente":
-        return "Cédula o documento de identidad";
-      case "doctor":
-        return "Código profesional médico";
-      case "recepcionista":
-        return "ID de empleado";
-      default:
-        return "Documento";
-    }
-  };
-
-  const handleLogin = async () => {
-    setIsLoading(true);
-    // Aquí iría la lógica de login (ej: API call)
-    setTimeout(() => {
-      setIsLoading(false);
-      console.log("Login con:", formData);
-    }, 1500);
-  };
+export default function LoginScreen() {
+  const [userType, setUserType] = useState("Paciente");
+  const [documento, setDocumento] = useState("");
+  const [password, setPassword] = useState("");
+ 
 
   return (
-    <View style={styles.card}>
-      <Text style={styles.title}>Acceso para {selectedUserType}</Text>
-      <Text style={styles.subtitle}>
-        Ingresa tus credenciales para acceder al sistema
-      </Text>
+    <View style={styles.container}>
+      <Text style={styles.title}>Tipo de Usuario</Text>
 
-      {/* Documento */}
-      <Text style={styles.label}>{getDocumentLabel()}</Text>
-      <TextInput
-        placeholder={getDocumentPlaceholder()}
-        value={formData.documento}
-        onChangeText={(text) => setFormData({ ...formData, documento: text })}
-        style={styles.input}
-      />
+      {/* Botones de roles */}
+      <TouchableOpacity
+        style={[
+          styles.roleButton,
+          userType === "Paciente" && styles.roleSelected,
+        ]}
+        onPress={() => {
+            setUserType("Paciente");
+           
+        }}
+      >
+        <Text style={styles.roleText}>Pacientes</Text>
+        <Text style={styles.roleSub}>Acceso para pacientes y familiares</Text>
+      </TouchableOpacity>
 
-      {/* Password */}
-      <Text style={styles.label}>Contraseña</Text>
-      <View style={styles.passwordContainer}>
+      <TouchableOpacity
+        style={[
+          styles.roleButton,
+          userType === "Doctor" && styles.roleSelected,
+        ]}
+        onPress={() => setUserType("Doctor")}
+      >
+        <Text style={styles.roleText}>Doctores</Text>
+        <Text style={styles.roleSub}>Acceso para médicos especialistas</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={[
+          styles.roleButton,
+          userType === "Recepcionista" && styles.roleSelected,
+        ]}
+        onPress={() =>{
+setUserType("Recepcionista");
+        } }
+      >
+        <Text style={styles.roleText}>Recepcionistas</Text>
+        <Text style={styles.roleSub}>Acceso para personal administrativo</Text>
+      </TouchableOpacity>
+
+      {/* Formulario */}
+      <View style={styles.form}>
+        <Text style={styles.formTitle}>Acceso para {userType}</Text>
+
         <TextInput
-          placeholder="Ingresa tu contraseña"
-          secureTextEntry={!showPassword}
-          value={formData.password}
-          onChangeText={(text) => setFormData({ ...formData, password: text })}
-          style={[styles.input, { flex: 1 }]}
+          style={styles.input}
+          placeholder="Cédula o documento de identidad"
+          placeholderTextColor="#94a3b8"
+          value={documento}
+          onChangeText={setDocumento}
         />
-        <TouchableOpacity
-          onPress={() => setShowPassword(!showPassword)}
-          style={styles.iconButton}
-        >
-          {showPassword ? <EyeOff size={20} color="gray" /> : <Eye size={20} color="gray" />}
+
+        <TextInput
+          style={styles.input}
+          placeholder="Contraseña"
+          placeholderTextColor="#94a3b8"
+          secureTextEntry
+          value={password}
+          onChangeText={setPassword}
+        />
+
+        <Text style={styles.forgot}>¿Olvidaste tu contraseña?</Text>
+
+        <TouchableOpacity style={styles.loginBtn}>
+          <Text style={styles.loginText}>Ingresar como {userType}</Text>
         </TouchableOpacity>
       </View>
-
-      {/* Botón */}
-      <TouchableOpacity
-        disabled={isLoading || !formData.documento || !formData.password}
-        onPress={handleLogin}
-        style={[
-          styles.button,
-          (isLoading || !formData.documento || !formData.password) && styles.buttonDisabled,
-        ]}
-      >
-        {isLoading ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <Text style={styles.buttonText}>Ingresar</Text>
-        )}
-      </TouchableOpacity>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  card: {
-    backgroundColor: "#fff",
-    padding: 20,
-    borderRadius: 12,
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 3,
-    margin: 16,
+  container: {
+    flex: 1,
+    backgroundColor: "#0f172a", // azul oscuro
+    padding: 100,
+    justifyContent: "center",
   },
   title: {
-    fontSize: 18,
+    color: "white",
+    fontSize: 20,
     fontWeight: "bold",
-    color: "#111",
-    marginBottom: 4,
+    marginBottom: 15,
   },
-  subtitle: {
-    fontSize: 14,
-    color: "#555",
-    marginBottom: 16,
+  roleButton: {
+    backgroundColor: "#1e293b",
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 10,
   },
-  label: {
-    fontSize: 14,
-    fontWeight: "600",
-    marginBottom: 4,
-    color: "#222",
+  roleSelected: {
+    backgroundColor: "#2563eb",
+  },
+  roleText: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  roleSub: {
+    color: "#cbd5e1",
+    fontSize: 12,
+  },
+  form: {
+    backgroundColor: "#1e293b",
+    padding: 20,
+    borderRadius: 10,
+    marginTop: 20,
+  },
+  formTitle: {
+    color: "white",
+    fontSize: 16,
+    marginBottom: 10,
   },
   input: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
+    backgroundColor: "#334155",
+    color: "white",
     padding: 10,
-    marginBottom: 12,
-    color: "#000",
+    borderRadius: 8,
+    marginBottom: 10,
   },
-  passwordContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 12,
+  forgot: {
+    color: "#3b82f6",
+    fontSize: 12,
+    marginBottom: 15,
+    textAlign: "right",
   },
-  iconButton: {
-    position: "absolute",
-    right: 10,
-  },
-  button: {
+  loginBtn: {
     backgroundColor: "#2563eb",
-    padding: 14,
+    padding: 15,
     borderRadius: 8,
     alignItems: "center",
   },
-  buttonDisabled: {
-    backgroundColor: "#93c5fd",
-  },
-  buttonText: {
-    color: "#fff",
+  loginText: {
+    color: "white",
     fontWeight: "bold",
   },
 });
