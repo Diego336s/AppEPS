@@ -1,9 +1,11 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Button } from "react-native";
 
-export default function RegisterPatientScreen() {
+export default function RegisterPatientScreen({navigation}) {
   const [nombre, setNombre] = useState("");
+    const [apellido, setApellido] = useState("");
   const [documento, setDocumento] = useState("");
+    const [telefono, setTelefono] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -15,10 +17,18 @@ export default function RegisterPatientScreen() {
       <View style={styles.form}>
         <TextInput
           style={styles.input}
-          placeholder="Nombre completo"
+          placeholder="Nombre"
           placeholderTextColor="#94a3b8"
           value={nombre}
           onChangeText={setNombre}
+        />
+
+         <TextInput
+          style={styles.input}
+          placeholder="Apellido"
+          placeholderTextColor="#94a3b8"
+          value={apellido}
+          onChangeText={setApellido}
         />
 
         <TextInput
@@ -26,7 +36,25 @@ export default function RegisterPatientScreen() {
           placeholder="Cédula o documento de identidad"
           placeholderTextColor="#94a3b8"
           value={documento}
+          keyboardType="phone-pad"
           onChangeText={setDocumento}
+        />
+
+                <TextInput
+          style={styles.input}
+          placeholder="Telefono"
+          placeholderTextColor="#94a3b8"
+          value={telefono}
+          keyboardType="phone-pad"
+          onChangeText={setTelefono}
+        />
+           <TextInput
+          style={styles.input}
+          placeholder="Fecha de nacimiento"
+          placeholderTextColor="#94a3b8"
+          keyboardType=""
+          value={email}
+          onChangeText={setEmail}
         />
 
         <TextInput
@@ -59,10 +87,14 @@ export default function RegisterPatientScreen() {
         <TouchableOpacity style={styles.registerBtn}>
           <Text style={styles.registerText}>Registrar Paciente</Text>
         </TouchableOpacity>
+        <View style={styles.iniciarSesionBtn}>
+                      <Button onPress={()=>{navigation.navigate("Login")}} title="Iniciar sesion" />
+                    </View>
+         
       </View>
     </View>
-  );
-}
+  )
+};
 
 const styles = StyleSheet.create({
   container: {
@@ -102,4 +134,9 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     fontSize: 16,
   },
+    iniciarSesionBtn: {
+    marginTop: 10,
+    borderRadius: 10,
+    overflow: "hidden",
+  }
 });
