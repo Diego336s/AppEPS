@@ -19,7 +19,7 @@ export default function Login({ navigation }) {
 
   const [documento, setDocumento] = useState("");
   const [password, setPassword] = useState("");
-   const [correo, setCorreo] = useState("");
+ 
  
   return (
     <ScrollView contentContainerStyle={styles.scroll}>

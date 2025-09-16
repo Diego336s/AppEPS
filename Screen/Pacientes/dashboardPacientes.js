@@ -2,7 +2,8 @@ import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
 import { Ionicons, MaterialIcons, FontAwesome5 } from "@expo/vector-icons";
 
-export default function DashboardScreen() {
+
+export default function DashboardScreen({navigation}) {
   return (
     <ScrollView style={styles.container}>
       {/* Header */}
@@ -38,24 +39,24 @@ export default function DashboardScreen() {
       {/* Acciones rápidas */}
       <Text style={styles.sectionTitle}>Acciones Rápidas</Text>
       <View style={styles.actionsRow}>
-        <TouchableOpacity style={[styles.actionCard, { backgroundColor: "#2563eb" }]}>
+        <TouchableOpacity onPress={()=>{navigation.navigate("crearCitas")}} style={[styles.actionCard, { backgroundColor: "#2563eb" }]}>
           <Ionicons name="add-circle" size={22} color="white" />
           <Text style={styles.actionText}>Nueva Cita</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={[styles.actionCard, { backgroundColor: "#22c55e" }]}>
+        <TouchableOpacity  onPress={()=>{navigation.navigate("buscarDoctores")}}  style={[styles.actionCard, { backgroundColor: "#22c55e" }]}>
           <Ionicons name="search" size={22} color="white" />
           <Text style={styles.actionText}>Buscar Doctor</Text>
         </TouchableOpacity>
       </View>
 
       <View style={styles.actionsRow}>
-        <TouchableOpacity style={[styles.actionCard, { backgroundColor: "#3b82f6" }]}>
+        <TouchableOpacity onPress={()=>{navigation.navigate("resultadoPacientes")}} style={[styles.actionCard, { backgroundColor: "#3b82f6" }]}>
           <Ionicons name="document-text" size={22} color="white" />
           <Text style={styles.actionText}>Resultados</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={[styles.actionCard, { backgroundColor: "#a855f7" }]}>
+        <TouchableOpacity onPress={()=>{navigation.navigate("historialPaciente")}} style={[styles.actionCard, { backgroundColor: "#a855f7" }]}>
           <FontAwesome5 name="heartbeat" size={20} color="white" />
           <Text style={styles.actionText}>Historial</Text>
         </TouchableOpacity>
