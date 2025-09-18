@@ -7,18 +7,42 @@ import {
   StyleSheet,
   Button,
   ScrollView,
+  Alert,
 } from "react-native";
 
 import { Fontisto, MaterialIcons, FontAwesome6 } from "@expo/vector-icons";
-
+import { loginPaciente } from "../../Src/Services/AuthService";
 export default function Login({ navigation }) {
      const [ocultar, setOcultar] = useState(false);
   
   const [userType, setUserType] = useState("Paciente");
+  const [correo, setCorreo] = useState("");
+  const [clave, setClave] = useState("");
+const [esperando, setEsperando] = useState(false);
+  const handleLogin = async()=>{
+    setEsperando(true);
+    try {
+      if(userType === "Paciente"){
+      const result = await loginPaciente(correo, clave);
+      if(result.success){
+        Alert.alert("Exito", "Inicio de sesion exitoso",[
+          {text: "OK", onPress:()=>console.log("Login exitoso, redirigiendo automaticamemte...")},
+        ]);
+      }else{
+        Alert.alert("Error de Login", result.message || "ocurrio un error al inicar sesion",);
+      }
+    
+      }
 
+    } catch (error) {
+      console.error("Error inesperado en Login:", error);
+      Alert.alert("Error:", "Ocurrio un error inesperado al intentar iniciar sesion")
+    }finally{
+      setEsperando(false);
+    }
+  }
+  
 
-  const [documento, setDocumento] = useState("");
-  const [password, setPassword] = useState("");
  
  
   return (
@@ -34,8 +58,8 @@ export default function Login({ navigation }) {
             placeholder="Correo"
             placeholderTextColor="#94a3b8"
             keyboardType="email-address"
-            value={documento}
-            onChangeText={setDocumento}
+            value={correo}
+            onChangeText={setCorreo}
           />
 
          
@@ -45,15 +69,15 @@ export default function Login({ navigation }) {
             placeholder="Contraseña"
             placeholderTextColor="#94a3b8"
             secureTextEntry
-            value={password}
-            onChangeText={setPassword}
+            value={clave}
+            onChangeText={setClave}
           />
 
           <TouchableOpacity>
             <Text style={styles.forgot}>¿Olvidaste tu contraseña?</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={()=> navigation.navigate("DasbohoardPacientes")} style={styles.loginBtn}>
+          <TouchableOpacity disabled={esperando} onPress={handleLogin} style={styles.loginBtn}>
             <Text style={styles.loginText}>Ingresar como {userType}</Text>
           </TouchableOpacity>
 

@@ -1,14 +1,73 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Button } from "react-native";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Button,
+  Alert,
+} from "react-native";
+import DateTimePickerModal from "react-native-modal-datetime-picker";
+import { registrarPaciente } from "../../Src/Services/AuthService";
 
-export default function RegisterPatientScreen({navigation}) {
+export default function RegisterPatientScreen({ navigation }) {
   const [nombre, setNombre] = useState("");
-    const [apellido, setApellido] = useState("");
+  const [apellido, setApellido] = useState("");
   const [documento, setDocumento] = useState("");
-    const [telefono, setTelefono] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [telefono, setTelefono] = useState("");
+  const [sexo, setSexo] = useState("");
+  const [nacionalidad, setNacionalidad] = useState("");
+  const [rh, setRh] = useState("");
+  const [fecha_nacimiento, setFechaNacimiento] = useState("");
+  const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
+  const [correo, setCorreo] = useState("");
+  const [clave, setClave] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+
+  // Date Picker
+  const showDatePicker = () => setDatePickerVisibility(true);
+  const hideDatePicker = () => setDatePickerVisibility(false);
+
+  const handleConfirm = (date) => {
+    const fDate =
+      date.getDate().toString().padStart(2, "0")+
+      "/" +
+      (date.getMonth() + 1).toString().padStart(2, "0") +
+      "/" +
+      date.getFullYear() ;
+      
+    setFechaNacimiento(fDate);
+    hideDatePicker();
+  };
+  const enviarForm = async()=>{
+    
+    if(clave !== confirmPassword){
+      Alert.alert("Las contraseñas no coninciden");
+      return;
+    }
+
+     if(!clave.length >= 6 &&  !confirmPassword.length >= 6){
+      Alert.alert("Las contraseña debe tener minimo 6 caracteres");
+      return;
+    }
+
+    if(!nombre || !apellido || !documento || !telefono || !fecha_nacimiento || !sexo || !nacionalidad || !rh || !correo || !clave || !confirmPassword){
+       Alert.alert("Debes completar todos los campos");
+      return;
+    }
+
+   
+    try {
+       const result = await registrarPaciente(nombre, apellido, documento,  fecha_nacimiento, telefono, rh, sexo, nacionalidad,  correo, clave);
+    if(result.success){
+      Alert.alert(result.message);
+    }
+    } catch (error) {
+      Alert.alert("Error al registrar", result.message || "Ocurrio un error al registrar")
+    }
+   
+  }
 
   return (
     <View style={styles.container}>
@@ -23,7 +82,7 @@ export default function RegisterPatientScreen({navigation}) {
           onChangeText={setNombre}
         />
 
-         <TextInput
+        <TextInput
           style={styles.input}
           placeholder="Apellido"
           placeholderTextColor="#94a3b8"
@@ -31,30 +90,67 @@ export default function RegisterPatientScreen({navigation}) {
           onChangeText={setApellido}
         />
 
+       
         <TextInput
           style={styles.input}
-          placeholder="Cédula o documento de identidad"
+          placeholder="Número de documento"
           placeholderTextColor="#94a3b8"
           value={documento}
-          keyboardType="phone-pad"
+          keyboardType="numeric"
           onChangeText={setDocumento}
         />
 
-                <TextInput
+        <TextInput
           style={styles.input}
-          placeholder="Telefono"
+          placeholder="Teléfono"
           placeholderTextColor="#94a3b8"
           value={telefono}
           keyboardType="phone-pad"
           onChangeText={setTelefono}
         />
-           <TextInput
+
+        {/* FECHA DE NACIMIENTO */}
+        <TouchableOpacity onPress={showDatePicker}>
+          <TextInput
+            style={styles.input}
+            placeholder="Fecha de nacimiento"
+            placeholderTextColor="#94a3b8"
+            value={fecha_nacimiento}
+            editable={false}
+          />
+        </TouchableOpacity>
+
+        <DateTimePickerModal
+          isVisible={isDatePickerVisible}
+          mode="date"
+          onConfirm={handleConfirm}
+          onCancel={hideDatePicker}
+        />
+
+    
+
+        <TextInput
           style={styles.input}
-          placeholder="Fecha de nacimiento"
+          placeholder="Sexo (M/F)"
           placeholderTextColor="#94a3b8"
-          keyboardType=""
-          value={email}
-          onChangeText={setEmail}
+          value={sexo}
+          onChangeText={setSexo}
+        />
+
+        <TextInput
+          style={styles.input}
+          placeholder="Nacionalidad"
+          placeholderTextColor="#94a3b8"
+          value={nacionalidad}
+          onChangeText={setNacionalidad}
+        />
+
+        <TextInput
+          style={styles.input}
+          placeholder="RH (Ej: O+, A-, B+)"
+          placeholderTextColor="#94a3b8"
+          value={rh}
+          onChangeText={setRh}
         />
 
         <TextInput
@@ -62,8 +158,8 @@ export default function RegisterPatientScreen({navigation}) {
           placeholder="Correo electrónico"
           placeholderTextColor="#94a3b8"
           keyboardType="email-address"
-          value={email}
-          onChangeText={setEmail}
+          value={correo}
+          onChangeText={setCorreo}
         />
 
         <TextInput
@@ -71,8 +167,8 @@ export default function RegisterPatientScreen({navigation}) {
           placeholder="Contraseña"
           placeholderTextColor="#94a3b8"
           secureTextEntry
-          value={password}
-          onChangeText={setPassword}
+          value={clave}
+          onChangeText={setClave}
         />
 
         <TextInput
@@ -84,17 +180,20 @@ export default function RegisterPatientScreen({navigation}) {
           onChangeText={setConfirmPassword}
         />
 
-        <TouchableOpacity style={styles.registerBtn}>
+        <TouchableOpacity style={styles.registerBtn} onPress={enviarForm}>
           <Text style={styles.registerText}>Registrar Paciente</Text>
         </TouchableOpacity>
+
         <View style={styles.iniciarSesionBtn}>
-                      <Button onPress={()=>{navigation.navigate("Login")}} title="Iniciar sesion" />
-                    </View>
-         
+          <Button
+            onPress={() => navigation.navigate("Login")}
+            title="Iniciar sesión"
+          />
+        </View>
       </View>
     </View>
-  )
-};
+  );
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -134,9 +233,9 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     fontSize: 16,
   },
-    iniciarSesionBtn: {
+  iniciarSesionBtn: {
     marginTop: 10,
     borderRadius: 10,
     overflow: "hidden",
-  }
+  },
 });

@@ -1,7 +1,7 @@
 import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity, Switch, ScrollView } from "react-native";
 import { useState } from "react";
-
+import { logoutPaciente } from "../../Src/Services/AuthService";
 export default function ConfiguracionesScreen({navigation}) {
   const [notificaciones, setNotificaciones] = useState(true);
   const [temaOscuro, setTemaOscuro] = useState(false);
@@ -49,7 +49,7 @@ export default function ConfiguracionesScreen({navigation}) {
       <View style={styles.card}>
         <Text style={styles.sectionTitle}>Otros</Text>
        
-        <TouchableOpacity style={styles.option}>
+        <TouchableOpacity onPress={logoutPaciente} style={styles.option}>
           <Text style={[styles.optionText, { color: "red" }]}>🚪 Cerrar Sesión</Text>
         </TouchableOpacity>
       </View>

@@ -1,15 +1,57 @@
-import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity, Image } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import React, { useEffect, useState } from "react";
+import { View, Text, StyleSheet, TouchableOpacity, Image, Alert } from "react-native";
+import api from "../../Src/Services/Conexion";
 
 export default function PerfilScreen({navigation}) {
-  const usuario = {
-    nombre: "Juan Carlos Rodríguez",
-    documento: "12345678",
-    fechaNacimiento: "1985-03-15",
-    email: "juan.rodriguez@mail.com",
-    telefono: "+57 300 123 4567",
-    direccion: "Calle 123 #45-67, Bogotá",
-  };
+  const [usuario, setUsuario] = useState(null);
+const [cargando, setCargando] = useState(true);
+
+  useEffect(()=>{
+    const cargarPerfil = async()=>{
+      try {
+        const token = await AsyncStorage.getItem("userToken");
+        if(!token){
+          Alert.alert("No se encontro el token del usuario, redirigiendo al login");
+          return;
+        }
+        const response = await api.get("/me");
+        console.log(response.data);
+        setUsuario(response.data);
+      } catch (error) {
+        console.error("Error al cargar el perfil:", error);
+        if(error.isAuthError || error.shoulRedirectToLogin){
+          console.log("Error de autemticacion menejado por el interceptor, redirigiendo al login");
+          return;
+        }
+        if(error.response){
+          Alert.alert("Error del servidor:", `Error ${error.response.status} : ${error.response.data?.message || "Ocurrio un error al cargar el perfil"}`,
+            [{
+              text: "OK",
+              onPress: async()=>{
+                await AsyncStorage.removeItem("userToken");
+              }
+            }]
+          )
+        }else{
+          Alert.alert(
+            "error",
+            "Ocurrio un error inesperado al cargar el perfil.",
+            [{
+              text: "OK",
+              onPress: async()=>{
+                await AsyncStorage.removeItem("userToken");
+              }
+            }]
+          );
+        }
+      }finally{
+        setCargando(false);
+      }
+    }
+    cargarPerfil();
+  },[]);
+
 
   return (
     <View style={styles.container}>
@@ -19,7 +61,7 @@ export default function PerfilScreen({navigation}) {
           source={{ uri: "https://cdn-icons-png.flaticon.com/512/3135/3135715.png" }}
           style={styles.avatar}
         />
-        <Text style={styles.nombre}>{usuario.nombre}</Text>
+        <Text style={styles.nombre}>{usuario.user.nombre}</Text>
         <Text style={styles.documento}>CC: {usuario.documento}</Text>
       </View>
 
@@ -27,26 +69,23 @@ export default function PerfilScreen({navigation}) {
       <View style={styles.card}>
         <Text style={styles.sectionTitle}>Información Personal</Text>
         <Text style={styles.label}>📌 Nombre Completo</Text>
-        <Text style={styles.value}>{usuario.nombre}</Text>
+        <Text style={styles.value}>{usuario.user.nombre} {usuario.apellido}</Text>
 
         <Text style={styles.label}>🆔 Documento</Text>
         <Text style={styles.value}>{usuario.documento}</Text>
 
         <Text style={styles.label}>🎂 Fecha de Nacimiento</Text>
-        <Text style={styles.value}>{usuario.fechaNacimiento}</Text>
+        <Text style={styles.value}>{usuario.fecha_nacimiento}</Text>
       </View>
 
       {/* Contacto */}
       <View style={styles.card}>
         <Text style={styles.sectionTitle}>Contacto</Text>
         <Text style={styles.label}>📧 Correo</Text>
-        <Text style={styles.value}>{usuario.email}</Text>
+        <Text style={styles.value}>{usuario.correo}</Text>
 
         <Text style={styles.label}>📱 Teléfono</Text>
         <Text style={styles.value}>{usuario.telefono}</Text>
-
-        <Text style={styles.label}>🏠 Dirección</Text>
-        <Text style={styles.value}>{usuario.direccion}</Text>
       </View>
 
       {/* Botón de editar */}
