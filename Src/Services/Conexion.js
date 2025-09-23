@@ -1,7 +1,7 @@
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const URL = "http://10.2.235.113:8000/api";
+const URL = "http://10.2.234.44:8000/api";
 
 const api = axios.create({
     baseURL: URL,
@@ -17,6 +17,7 @@ const RutasPublicas = [
     "/loginMedico",
     "/loginAdmin",
     "/crearPaciente",
+    
 ]; //Rutas de api que no requiren autenticacion
 
 api.interceptors.request.use(
@@ -53,7 +54,7 @@ api.interceptors.response.use(
             originalRequest._retry = true;
             await AsyncStorage.removeItem("userToken"); //Elimino el token guardado
             console.log(
-                "TOken a expirado o no autorizado, Redirigirte al login",
+                "Token a expirado o no autorizado, Redirigirte al login",
             );
         }
 

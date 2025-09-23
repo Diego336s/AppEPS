@@ -7,8 +7,9 @@ export default function PerfilScreen({navigation}) {
   const [usuario, setUsuario] = useState(null);
 const [cargando, setCargando] = useState(true);
 
-  useEffect(()=>{
-    const cargarPerfil = async()=>{
+ 
+useEffect(()=>{
+const CargarPerfil = async()=>{
       try {
         const token = await AsyncStorage.getItem("userToken");
         if(!token){
@@ -49,8 +50,11 @@ const [cargando, setCargando] = useState(true);
         setCargando(false);
       }
     }
-    cargarPerfil();
-  },[]);
+CargarPerfil();
+},[]);
+    
+    
+ 
 
 
   return (
@@ -61,35 +65,35 @@ const [cargando, setCargando] = useState(true);
           source={{ uri: "https://cdn-icons-png.flaticon.com/512/3135/3135715.png" }}
           style={styles.avatar}
         />
-        <Text style={styles.nombre}>{usuario.user.nombre}</Text>
-        <Text style={styles.documento}>CC: {usuario.documento}</Text>
+        <Text style={styles.nombre}>{usuario?.user.nombre}</Text>
+        <Text style={styles.documento}>CC: {usuario?.user.documento}</Text>
       </View>
 
       {/* Información Personal */}
       <View style={styles.card}>
         <Text style={styles.sectionTitle}>Información Personal</Text>
         <Text style={styles.label}>📌 Nombre Completo</Text>
-        <Text style={styles.value}>{usuario.user.nombre} {usuario.apellido}</Text>
+        <Text style={styles.value}>{usuario?.user.nombre} {usuario?.user.apellido}</Text>
 
         <Text style={styles.label}>🆔 Documento</Text>
-        <Text style={styles.value}>{usuario.documento}</Text>
+        <Text style={styles.value}>{usuario?.user.documento}</Text>
 
         <Text style={styles.label}>🎂 Fecha de Nacimiento</Text>
-        <Text style={styles.value}>{usuario.fecha_nacimiento}</Text>
+        <Text style={styles.value}>{usuario?.user.fecha_nacimiento}</Text>
       </View>
 
       {/* Contacto */}
       <View style={styles.card}>
         <Text style={styles.sectionTitle}>Contacto</Text>
         <Text style={styles.label}>📧 Correo</Text>
-        <Text style={styles.value}>{usuario.correo}</Text>
+        <Text style={styles.value}>{usuario?.user.correo}</Text>
 
         <Text style={styles.label}>📱 Teléfono</Text>
-        <Text style={styles.value}>{usuario.telefono}</Text>
+        <Text style={styles.value}>{usuario?.user.telefono}</Text>
       </View>
 
       {/* Botón de editar */}
-      <TouchableOpacity onPress={()=>{navigation.navigate("editar_perfil")}} style={styles.botonEditar}>
+      <TouchableOpacity onPress={()=>{navigation.navigate("Editar_perfil")}} style={styles.botonEditar}>
         <Text style={styles.botonTexto}>✏️ Editar Perfil</Text>
       </TouchableOpacity>
     </View>

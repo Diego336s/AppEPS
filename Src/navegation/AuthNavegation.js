@@ -7,7 +7,12 @@ const Stack = createNativeStackNavigator();
 
 export default function AuthNavegation(){
     return(
-        <Stack.Navigator>
+        <Stack.Navigator
+           screenOptions={{
+        headerStyle: { backgroundColor: "#051038" }, // Color de fondo
+        headerTintColor: "#fff", // Color del texto y los íconos (flecha atrás, etc.)
+        headerTitleStyle: { fontWeight: "bold" }, // Opcional: estilo del título
+      }}>
             <Stack.Screen
             name="Login"
             component={Login}
@@ -21,7 +26,7 @@ export default function AuthNavegation(){
             <Stack.Screen
             name="Registrar"
             component={Registrar}
-            options={{title: "Registrar Paciente"}}
+            options={{title: "Registro"}}
             />
         </Stack.Navigator>
     )

@@ -1,6 +1,6 @@
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import perfil_paciente from "../../../Screen/Perfil/perfil";
-import editar_perfil from "../../../Screen/Perfil/editar_perfil";
+import PerfilScreen from "../../../Screen/Perfil/Perfil";
+import Editar_perfil from "../../../Screen/Perfil/Editar_perfil";
 
 const Stack = createNativeStackNavigator();
 
@@ -14,14 +14,14 @@ export default function Pacientes_Stack() {
       }}
     >
       <Stack.Screen
-        name="Perfil paciente"
-        component={perfil_paciente}
+        name="Perfil_paciente"
+        component={PerfilScreen}
         options={{ title: "Perfil" }}
       />
 
       <Stack.Screen
-        name="editar_perfil"
-        component={editar_perfil}
+        name="Editar_perfil"
+        component={Editar_perfil}
         options={{ title: "Actualizar perfil" }}
       />
      

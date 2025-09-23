@@ -1,17 +1,63 @@
-import React from "react";
+import React, {useEffect, useState} from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import api from "../../Src/Services/Conexion";
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
 import { Ionicons, MaterialIcons, FontAwesome5 } from "@expo/vector-icons";
 
 
 export default function DashboardScreen({navigation}) {
+const [usuario, setUsuario] = useState(null)
+  useEffect(()=>{
+  const CargarPerfil = async()=>{
+        try {
+          const token = await AsyncStorage.getItem("userToken");
+          if(!token){
+            Alert.alert("No se encontro el token del usuario, redirigiendo al login");
+            return;
+          }
+          const response = await api.get("/me");
+          console.log(response.data);
+          setUsuario(response.data);
+        } catch (error) {
+          console.error("Error al cargar el perfil:", error);
+          if(error.isAuthError || error.shoulRedirectToLogin){
+            console.log("Error de autemticacion menejado por el interceptor, redirigiendo al login");
+            return;
+          }
+          if(error.response){
+            Alert.alert("Error del servidor:", `Error ${error.response.status} : ${error.response.data?.message || "Ocurrio un error al cargar el perfil"}`,
+              [{
+                text: "OK",
+                onPress: async()=>{
+                  await AsyncStorage.removeItem("userToken");
+                }
+              }]
+            )
+          }else{
+            Alert.alert(
+              "error",
+              "Ocurrio un error inesperado al cargar el perfil.",
+              [{
+                text: "OK",
+                onPress: async()=>{
+                  await AsyncStorage.removeItem("userToken");
+                }
+              }]
+            );
+          }
+        }
+      }
+  CargarPerfil();
+  },[]);
+
   return (
     <ScrollView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
         <Ionicons name="person-circle" size={50} color="white" />
         <View style={{ marginLeft: 10 }}>
-          <Text style={styles.welcome}>Bienvenido, Juan</Text>
-          <Text style={styles.sub}>CC: 12345678</Text>
+          <Text style={styles.welcome}>Bienvenido, {usuario?.user.nombre}</Text>
+          <Text style={styles.sub}>CC: {usuario?.user.documento}</Text>
         </View>
       </View>
 

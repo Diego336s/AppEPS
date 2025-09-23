@@ -8,10 +8,14 @@ import {
   Button,
   ScrollView,
   Alert,
+  KeyboardAvoidingView,
+  Platform
 } from "react-native";
 
 import { Fontisto, MaterialIcons, FontAwesome6 } from "@expo/vector-icons";
 import { loginPaciente } from "../../Src/Services/AuthService";
+import FlashMessage, { showMessage } from "react-native-flash-message";
+
 export default function Login({ navigation }) {
      const [ocultar, setOcultar] = useState(false);
   
@@ -21,13 +25,24 @@ export default function Login({ navigation }) {
 const [esperando, setEsperando] = useState(false);
   const handleLogin = async()=>{
     setEsperando(true);
+    if(!correo || !clave){
+       showMessage({
+               message:"Error ☹️",
+               description: "Debes completar todos los campos 😰",
+               type: "danger"
+             });
+             setEsperando(false);
+             return;
+    }
     try {
       if(userType === "Paciente"){
       const result = await loginPaciente(correo, clave);
       if(result.success){
-        Alert.alert("Exito", "Inicio de sesion exitoso",[
-          {text: "OK", onPress:()=>console.log("Login exitoso, redirigiendo automaticamemte...")},
-        ]);
+      showMessage({
+               message:"Bienvenido 😊",
+               description: "Inicio de sesion exitoso ✅",
+               type: "success"
+             });
       }else{
         Alert.alert("Error de Login", result.message || "ocurrio un error al inicar sesion",);
       }
@@ -42,57 +57,19 @@ const [esperando, setEsperando] = useState(false);
     }
   }
   
+  
 
  
  
   return (
+      <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    style={{ flex: 1 }}
+      >
     <ScrollView contentContainerStyle={styles.scroll}>
       <View style={styles.container}>
-         {/* Formulario */}
-        <View style={styles.form}>
-          <Text style={styles.formTitle}>Acceso para {userType}</Text>
-
-
-     <TextInput
-            style={styles.input}
-            placeholder="Correo"
-            placeholderTextColor="#94a3b8"
-            keyboardType="email-address"
-            value={correo}
-            onChangeText={setCorreo}
-          />
-
+ <FlashMessage position="top"/>
          
-
-          <TextInput
-            style={styles.input}
-            placeholder="Contraseña"
-            placeholderTextColor="#94a3b8"
-            secureTextEntry
-            value={clave}
-            onChangeText={setClave}
-          />
-
-          <TouchableOpacity>
-            <Text style={styles.forgot}>¿Olvidaste tu contraseña?</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity disabled={esperando} onPress={handleLogin} style={styles.loginBtn}>
-            <Text style={styles.loginText}>Ingresar como {userType}</Text>
-          </TouchableOpacity>
-
-          {/* Solo mostrar el botón de registro si ocultar es falso */}
-          {!ocultar && (
-            <View style={styles.registerBtn}>
-              <Button
-                onPress={() => navigation.navigate("Registrar")}
-                title="Registrar Paciente"
-                color="#22c55e"
-              />
-            </View>
-          )}
-        </View>
-        
         <Text style={styles.title}>Selecciona el tipo de usuario</Text>
 
         {/* Botones de roles */}
@@ -165,16 +142,62 @@ const [esperando, setEsperando] = useState(false);
           }}
         >
              <View style={styles.alinear}>
- <Fontisto name="headphone" size={24} color="white" />
+            <Fontisto name="headphone" size={24} color="white" />
           <Text style={styles.roleText}>Recepcionistas</Text>
              </View>
            
           <Text style={styles.roleSub}>Acceso para personal administrativo</Text>
         </TouchableOpacity>
 
+         {/* Formulario */}
+        <View style={styles.form}>
+          <Text style={styles.formTitle}>Acceso para {userType}</Text>
+
+
+     <TextInput
+            style={styles.input}
+            placeholder="Correo"
+            placeholderTextColor="#94a3b8"
+            keyboardType="email-address"
+            value={correo}
+            onChangeText={setCorreo}
+          />
+
+         
+
+          <TextInput
+            style={styles.input}
+            placeholder="Contraseña"
+            placeholderTextColor="#94a3b8"
+            secureTextEntry
+            value={clave}
+            onChangeText={setClave}
+          />
+
+          <TouchableOpacity>
+            <Text style={styles.forgot}>¿Olvidaste tu contraseña?</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity disabled={esperando} onPress={handleLogin} style={styles.loginBtn}>
+            <Text style={styles.loginText}>Ingresar como {userType}</Text>
+          </TouchableOpacity>
+
+          {/* Solo mostrar el botón de registro si ocultar es falso */}
+          {!ocultar && (
+            <View style={styles.registerBtn}>
+              <Button
+                onPress={() => navigation.navigate("Registrar")}
+                title="Registrar Paciente"
+                color="#22c55e"
+              />
+            </View>
+          )}
+        </View>
+       
        
       </View>
     </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -194,7 +217,7 @@ const styles = StyleSheet.create({
     padding: 50,
   },
   title: {
-    paddingTop: 30,
+    paddingTop: 5,
     color: "white",
     fontSize: 22,
     fontWeight: "bold",

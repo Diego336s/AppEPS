@@ -2,6 +2,10 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import api from "./Conexion";
 import { Alert } from "react-native";
 import dayjs from "dayjs";
+import customParseFormat from "dayjs/plugin/customParseFormat";
+
+dayjs.extend(customParseFormat);
+
 
 export const loginPaciente = async (correo, clave) => {
     try {
@@ -39,10 +43,7 @@ export const logoutPaciente = async () => {
         }
         return { success: true, message: response.data.message };
     } catch (error) {
-        console.error(
-            "Error al cerrar sesion:",
-            error.response ? error.response.data : error.message,
-        );
+       
         return {
             success: false,
             message: error.response ? error.response.data : "Error de conexion",
@@ -55,7 +56,7 @@ export const registrarPaciente = async (
     apellido,
     documento,
     telefonoString,
-    fechaString,
+    fecha_nacimiento,
     rh,
     sexo,
     nacionalidad,
@@ -63,11 +64,13 @@ export const registrarPaciente = async (
     clave,
 ) => {
     try {
-        if (!dayjs(fechaString).isValid()) {
-            console.error("La fecha de nacimiento no es válida", fechaString);
+        if (!dayjs(fecha_nacimiento.trim(), "YYYY-MM-DD", true).isValid()) {
+            console.error("La fecha de nacimiento no es válida", fecha_nacimiento);
             return;
         }
-        const fecha_nacimiento = dayjs(fechaString).format("YYYY-MM-DD");
+        console.log("Fecha de nacimiento", fecha_nacimiento);
+       
+        console.log("Fecha ya con formato", fecha_nacimiento);
         const telefono = parseInt(telefonoString);
         const response = await api.post("/crearPaciente", {
             nombre,
