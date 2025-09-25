@@ -1,41 +1,39 @@
-import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet } from "react-native";
-
-const doctoresMock = [
-  {
-    id: "1",
-    nombre: "Dr. Carlos Ruiz",
-    especialidad: "Cardiología",
-    calificacion: 4.9,
-    resenas: 89,
-    hospital: "Hospital Central",
-    disponibilidad: "Mañana 10:30 AM",
-    experiencia: "12 años",
-    tarifa: "$80.000",
-    idiomas: ["Español"],
-    estado: "Disponible",
-  },
-  {
-    id: "2",
-    nombre: "Dra. Patricia Silva",
-    especialidad: "Pediatría",
-    calificacion: 4.7,
-    resenas: 65,
-    hospital: "Clínica Norte",
-    disponibilidad: "Viernes 3:00 PM",
-    experiencia: "8 años",
-    tarifa: "$70.000",
-    idiomas: ["Español", "Inglés"],
-    estado: "No disponible",
-  },
-];
+import React, { useState, useEffect } from "react";
+import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, Alert } from "react-native";
+import { listarMedicosConEspecialidad } from "../../Src/Services/MedicosService";
 
 export default function BuscarDoctoresScreen() {
-  const [busqueda, setBusqueda] = useState("");
+  const [medicos, setMedicos] = useState([]);
+  const [mensaje, setMensaje] = useState(null);
+  const [searchText, setSearchText] = useState(""); // 👈 Estado de búsqueda
 
-  const doctoresFiltrados = doctoresMock.filter((doc) =>
-    doc.nombre.toLowerCase().includes(busqueda.toLowerCase())
-  );
+  useEffect(() => {
+    const CargarMedicos = async () => {
+      try {
+        const response = await listarMedicosConEspecialidad();
+        if (response?.message) {
+          setMensaje(response?.message);
+          setMedicos([]);
+          return;
+        }
+        setMedicos(response?.medicos || []);
+      } catch (error) {
+        console.error("Error al cargar los doctores: " + error);
+        Alert.alert("Error, no se puede cargar los doctores.");
+      }
+    };
+    CargarMedicos();
+  }, []);
+
+  // 👇 Filtrar médicos según lo escrito
+  const doctoresFiltrados = medicos?.filter((item) => {
+    const search = searchText.toLowerCase();
+    return (
+      item?.nombre?.toLowerCase().includes(search) ||
+      item?.apellido?.toLowerCase().includes(search) ||
+      item?.especialidad?.toLowerCase().includes(search)
+    );
+  });
 
   return (
     <View style={styles.container}>
@@ -44,37 +42,23 @@ export default function BuscarDoctoresScreen() {
 
       <TextInput
         style={styles.input}
-        placeholder="Buscar por nombre, especialidad o ubicación..."
+        placeholder="Buscar por nombre o especialidad..."
         placeholderTextColor="#aaa"
-        value={busqueda}
-        onChangeText={setBusqueda}
+        value={searchText}
+        onChangeText={setSearchText} // 👈 actualiza estado
       />
 
+      {mensaje && <Text style={{ color: "white" }}>{mensaje}</Text>}
+
       <FlatList
-        data={doctoresFiltrados}
-        keyExtractor={(item) => item.id}
+        data={doctoresFiltrados} // 👈 se muestran filtrados
+        keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => (
           <View style={styles.card}>
-            <Text style={styles.nombre}>{item.nombre}</Text>
+            <Text style={styles.nombre}>Doc. {item.nombre} {item.apellido}</Text>
             <Text style={styles.especialidad}>{item.especialidad}</Text>
-            <Text style={styles.info}>⭐ {item.calificacion} ({item.resenas} reseñas)</Text>
-            <Text style={styles.info}>🏥 {item.hospital}</Text>
-            <Text style={styles.info}>🕒 {item.disponibilidad}</Text>
-            <Text style={styles.info}>🎓 {item.experiencia}</Text>
-            <Text style={styles.info}>💵 {item.tarifa}</Text>
-            <Text style={styles.info}>🌍 Idiomas: {item.idiomas.join(", ")}</Text>
-            <Text style={[styles.estado, { color: item.estado === "Disponible" ? "green" : "red" }]}>
-              {item.estado}
-            </Text>
-
-            <View style={styles.botones}>
-              <TouchableOpacity style={styles.botonPrimario}>
-                <Text style={styles.botonTexto}>Agendar Cita</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.botonSecundario}>
-                <Text style={styles.botonTexto}>Ver Perfil</Text>
-              </TouchableOpacity>
-            </View>
+            <Text style={styles.telefono}>{item.telefono}</Text>
+            <Text style={styles.telefono}>{item.correo}</Text>            
           </View>
         )}
       />
@@ -101,8 +85,7 @@ const styles = StyleSheet.create({
   },
   nombre: { fontSize: 16, fontWeight: "bold", color: "#fff" },
   especialidad: { fontSize: 14, color: "#60a5fa", marginBottom: 5 },
-  info: { fontSize: 12, color: "#ccc" },
-  estado: { fontSize: 12, fontWeight: "bold", marginTop: 5 },
+    telefono: { fontSize: 14, color: "#c3cbd3ff", marginBottom: 5 },
   botones: { flexDirection: "row", marginTop: 10, justifyContent: "space-between" },
   botonPrimario: { backgroundColor: "#2563eb", padding: 10, borderRadius: 8, flex: 1, marginRight: 5, alignItems: "center" },
   botonSecundario: { backgroundColor: "#334155", padding: 10, borderRadius: 8, flex: 1, marginLeft: 5, alignItems: "center" },

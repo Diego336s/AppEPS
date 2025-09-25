@@ -1,74 +1,106 @@
-import React from "react";
-import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity } from "react-native";
-import { Ionicons, MaterialIcons } from "@expo/vector-icons";
+import React, { useEffect, useState } from "react";
+import { View, Text, StyleSheet, ScrollView, TextInput, Alert } from "react-native";
+import { cargarCitasPorPaciente } from "../../Src/Services/PacientesService";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import api from "../../Src/Services/Conexion";
 
 export default function HistorialMedico() {
-  const historial = [
-    {
-      fecha: "2024-01-08 11:00 AM",
-      doctor: "Dr. Luis Pérez",
-      especialidad: "Oftalmología",
-      diagnostico: "Control rutinario - Visión normal",
-      tratamiento: "Continuar con cuidados preventivos",
-      documento: "Resultados_examen_visual.pdf",
-      estado: "Completada",
-    },
-    {
-      fecha: "2023-12-15 3:30 PM",
-      doctor: "Dra. Carmen Silva",
-      especialidad: "Medicina General",
-      diagnostico: "Hipertensión arterial leve",
-      tratamiento: "Medicamento antihipertensivo, dieta baja en sodio",
-      documento: null,
-      estado: "Completada",
-    },
-  ];
+  const [usuario, setUsuario] = useState(null);
+  const [citas, setCitas] = useState([]);
+  const [mensaje, setMensaje] = useState(null);
+  const [searchText, setSearchText] = useState(""); // 👈 Estado para el filtro
+
+  useEffect(() => {
+    const CargarPerfil = async () => {
+      try {
+        const token = await AsyncStorage.getItem("userToken");
+        if (!token) {
+          await AsyncStorage.multiRemove(["userToken", "rolUser"]);
+          Alert.alert("No se encontró el token, redirigiendo al login");
+          return;
+        }
+        const response = await api.get("/me");
+        setUsuario(response.data);
+      } catch (error) {
+        console.error("Error al cargar el perfil:", error);
+      }
+    };
+
+    CargarPerfil();
+  }, []);
+
+  useEffect(() => {
+    if (!usuario?.user?.documento) return;
+    const CargarCitas = async () => {
+      try {
+        const response = await cargarCitasPorPaciente(usuario.user.documento);
+        if (response.message) {
+          setMensaje(response.message);
+          setCitas([]);
+          return;
+        }
+        setCitas(response.citas || []);
+      } catch (error) {
+        console.error("Error al cargar las citas: " + error);
+        Alert.alert("Error, no se puede cargar las citas del paciente.");
+      }
+    };
+    CargarCitas();
+  }, [usuario]);
+
+  // 👇 Filtrar citas según lo escrito
+  const filteredCitas = citas.filter((item) => {
+    const search = searchText.toLowerCase();
+    return (
+      item?.fecha?.toLowerCase().includes(search) ||
+      item?.nombre_medico?.toLowerCase().includes(search) ||
+      item?.apellido_medico?.toLowerCase().includes(search) ||
+      item?.especialidad?.toLowerCase().includes(search) ||
+      item?.descripcion?.toLowerCase().includes(search) ||
+      item?.estado?.toLowerCase().includes(search)
+    );
+  });
 
   return (
     <View style={styles.container}>
       {/* Buscador */}
       <TextInput
         style={styles.searchInput}
-        placeholder="Buscar en historial médico..."
+        placeholder="Buscar cita..."
         placeholderTextColor="#999"
+        value={searchText}
+        onChangeText={setSearchText} // 👈 actualiza el estado
       />
 
       <ScrollView>
-        {historial.map((item, index) => (
-          <View key={index} style={styles.card}>
-            <Text style={styles.fecha}>{item.fecha}</Text>
-            <Text style={styles.doctor}>{item.doctor}</Text>
-            <Text style={styles.especialidad}>{item.especialidad}</Text>
+        {mensaje && <Text style={{ color: "white" }}>{mensaje}</Text>}
+        {filteredCitas.length > 0 ? (
+          filteredCitas.map((item, index) => (
+            <View key={index} style={styles.card}>
+              <Text style={styles.fecha}>{item?.fecha} - {item?.hora_inicio}</Text>
+              <Text style={styles.doctor}>Doc. {item?.nombre_medico} {item.apellido_medico}</Text>
+              <Text style={styles.especialidad}>{item?.especialidad}</Text>
 
-            <Text style={styles.label}>Diagnóstico:</Text>
-            <Text style={styles.text}>{item.diagnostico}</Text>
+              <Text style={styles.label}>Motivo:</Text>
+              <Text style={styles.text}>{item?.descripcion}</Text>
 
-            <Text style={styles.label}>Tratamiento:</Text>
-            <Text style={styles.text}>{item.tratamiento}</Text>
-
-            {item.documento && (
-              <TouchableOpacity style={styles.docButton}>
-                <Ionicons name="document-text-outline" size={20} color="#fff" />
-                <Text style={styles.docText}>{item.documento}</Text>
-              </TouchableOpacity>
-            )}
-
-            {/* Botones */}
-            <View style={styles.actions}>
-              <TouchableOpacity style={styles.detailButton}>
-                <Ionicons name="eye-outline" size={18} color="#fff" />
-                <Text style={styles.buttonText}>Ver Detalles</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity style={styles.downloadButton}>
-                <MaterialIcons name="file-download" size={18} color="#fff" />
-                <Text style={styles.buttonText}>Descargar</Text>
-              </TouchableOpacity>
+              <Text style={styles.label}>Estado:</Text>
+              <Text
+                style={[
+                  styles.text,
+                  item?.estado === "Confirmada" && styles.estadoConfirmada,
+                  item?.estado === "Cancelada" && styles.estadoCancelada,
+                  item?.estado === "Pendiente" && styles.estadoPendiente,
+                  item?.estado === "Finalizada" && styles.estadoFinalizada
+                ]}
+              >
+                {item?.estado}
+              </Text>
             </View>
-
-            <Text style={styles.estado}>{item.estado}</Text>
-          </View>
-        ))}
+          ))
+        ) : (
+          <Text style={{ color: "white", textAlign: "center" }}>No se encontraron citas</Text>
+        )}
       </ScrollView>
     </View>
   );
@@ -94,41 +126,8 @@ const styles = StyleSheet.create({
   especialidad: { color: "#aaa", marginBottom: 10 },
   label: { color: "#00bfff", fontWeight: "bold" },
   text: { color: "#ddd", marginBottom: 5 },
-  docButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#0066cc",
-    padding: 8,
-    borderRadius: 6,
-    marginVertical: 5,
-  },
-  docText: { color: "#fff", marginLeft: 8 },
-  actions: { flexDirection: "row", justifyContent: "space-between", marginTop: 10 },
-  detailButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#007bff",
-    padding: 8,
-    borderRadius: 6,
-    flex: 1,
-    marginRight: 5,
-    justifyContent: "center",
-  },
-  downloadButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#004080",
-    padding: 8,
-    borderRadius: 6,
-    flex: 1,
-    marginLeft: 5,
-    justifyContent: "center",
-  },
-  buttonText: { color: "#fff", marginLeft: 5 },
-  estado: {
-    marginTop: 10,
-    alignSelf: "flex-end",
-    color: "lightgreen",
-    fontWeight: "bold",
-  },
+  estadoConfirmada: { marginTop: 10, alignSelf: "flex-end", color: "#2bff00ff", fontWeight: "bold" },
+  estadoCancelada: { marginTop: 10, alignSelf: "flex-end", color: "red", fontWeight: "bold" },
+  estadoPendiente: { marginTop: 10, alignSelf: "flex-end", color: "#f2fa12ff", fontWeight: "bold" },
+  estadoFinalizada: { marginTop: 10, alignSelf: "flex-end", color: "#1c4507ff", fontWeight: "bold" },
 });

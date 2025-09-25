@@ -1,54 +1,54 @@
 import React, {useEffect, useState} from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import api from "../../Src/Services/Conexion";
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert } from "react-native";
 import { Ionicons, MaterialIcons, FontAwesome5 } from "@expo/vector-icons";
+import { cargarCitasConfirmadasPorPaciente } from "../../Src/Services/PacientesService";
+
 
 
 export default function DashboardScreen({navigation}) {
 const [usuario, setUsuario] = useState(null)
-  useEffect(()=>{
-  const CargarPerfil = async()=>{
-        try {
-          const token = await AsyncStorage.getItem("userToken");
-          if(!token){
-            Alert.alert("No se encontro el token del usuario, redirigiendo al login");
-            return;
-          }
-          const response = await api.get("/me");
-          console.log(response.data);
-          setUsuario(response.data);
-        } catch (error) {
-          console.error("Error al cargar el perfil:", error);
-          if(error.isAuthError || error.shoulRedirectToLogin){
-            console.log("Error de autemticacion menejado por el interceptor, redirigiendo al login");
-            return;
-          }
-          if(error.response){
-            Alert.alert("Error del servidor:", `Error ${error.response.status} : ${error.response.data?.message || "Ocurrio un error al cargar el perfil"}`,
-              [{
-                text: "OK",
-                onPress: async()=>{
-                  await AsyncStorage.removeItem("userToken");
-                }
-              }]
-            )
-          }else{
-            Alert.alert(
-              "error",
-              "Ocurrio un error inesperado al cargar el perfil.",
-              [{
-                text: "OK",
-                onPress: async()=>{
-                  await AsyncStorage.removeItem("userToken");
-                }
-              }]
-            );
-          }
-        }
+const [citas, setCitas] = useState(null);
+const [mensaje, setMensaje] = useState(null);
+  useEffect(() => {
+  const CargarPerfil = async () => {
+    try {
+      const token = await AsyncStorage.getItem("userToken");
+      if (!token) {
+        await AsyncStorage.multiRemove(["userToken", "rolUser"]);
+        Alert.alert("No se encontró el token, redirigiendo al login");
+        return;
       }
+      const response = await api.get("/me");
+      setUsuario(response.data);
+    } catch (error) {
+      console.error("Error al cargar el perfil:", error);
+    }
+  };
+
   CargarPerfil();
-  },[]);
+}, []);
+
+useEffect(() => {
+  if (!usuario?.user?.documento) return;
+  const CargarCitas = async () => {
+    try {
+      const response = await cargarCitasConfirmadasPorPaciente(usuario.user.documento);
+      if (response.message) {
+        setMensaje(response.message);
+        setCitas([]);
+        return;
+      }
+      setCitas(response.citas || []);
+    } catch (error) {
+      console.error("Error al cargar las citas: " + error);
+      Alert.alert("Error, no se puede cargar las citas del paciente.");
+    }
+  };
+  CargarCitas();
+}, [usuario]);
+
 
   return (
     <ScrollView style={styles.container}>
@@ -96,35 +96,38 @@ const [usuario, setUsuario] = useState(null)
         </TouchableOpacity>
       </View>
 
-      <View style={styles.actionsRow}>
-        <TouchableOpacity onPress={()=>{navigation.navigate("resultadoPacientes")}} style={[styles.actionCard, { backgroundColor: "#3b82f6" }]}>
-          <Ionicons name="document-text" size={22} color="white" />
-          <Text style={styles.actionText}>Resultados</Text>
-        </TouchableOpacity>
-
+      <View style={styles.actionsRow}>     
         <TouchableOpacity onPress={()=>{navigation.navigate("historialPaciente")}} style={[styles.actionCard, { backgroundColor: "#a855f7" }]}>
           <FontAwesome5 name="heartbeat" size={20} color="white" />
-          <Text style={styles.actionText}>Historial</Text>
+          <Text style={styles.actionText}>Historial citas</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Próximas citas */}
-      <Text style={styles.sectionTitle}>Próximas Citas</Text>
-      <View style={styles.appointmentCard}>
-        <Text style={styles.doctor}>Dr. María González</Text>
-        <Text style={styles.specialty}>Medicina General</Text>
-        <Text style={styles.date}>📅 2024-01-15   🕒 10:30 AM</Text>
-        <Text style={styles.location}>📍 Consultorio 201</Text>
+      {/* Próximas citas */}     
+     <Text style={styles.sectionTitle}>Próximas Citas</Text>
+{mensaje && <Text style={{ color: "white" }}>{mensaje}</Text>}
+{citas && citas.map((itemsCita, index) => (
+  
+  <View key={index} style={styles.appointmentCard}>
+    <Text style={styles.doctor}>Doc. {itemsCita?.nombre_medico} {itemsCita?.apellido_medico}</Text>
+    <Text style={styles.specialty}>{itemsCita?.especialidad}</Text>   
+    <Text style={styles.date}>📅 {itemsCita?.fecha} 🕒 {itemsCita?.hora_inicio}</Text>
+    <Text style={styles.location}>📝 {itemsCita?.descripcion}</Text>
+   
 
-        <View style={styles.buttonsRow}>
-          <TouchableOpacity style={styles.rescheduleBtn}>
-            <Text style={styles.btnText}>Reprogramar</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.cancelBtn}>
-            <Text style={styles.btnText}>Cancelar</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+    <View style={styles.buttonsRow}>
+      <TouchableOpacity style={styles.rescheduleBtn}>
+        <Text style={styles.btnText}>Reprogramar</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.cancelBtn}>
+        <Text style={styles.btnText}>Cancelar</Text>
+      </TouchableOpacity>
+    </View>
+  </View>
+))}
+
+
+     
     </ScrollView>
   );
 }

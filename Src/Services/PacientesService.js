@@ -1,0 +1,104 @@
+import api from "./Conexion";
+
+import dayjs from "dayjs";
+import customParseFormat from "dayjs/plugin/customParseFormat";
+import { Alert } from "react-native";
+
+dayjs.extend(customParseFormat);
+
+export const agendarCita = async (
+    descripcion,
+    id_medico,
+    id_paciente,
+    fecha,
+    hora_string,
+) => {
+    const estado = "Pendiente";
+
+    // Validar fecha
+    if (!dayjs(fecha.trim(), "YYYY-MM-DD", true).isValid()) {
+        Alert.alert("Error", "La fecha de la cita no es válida");
+        return { success: false };
+    }
+
+    // Asegurar que la hora esté en formato HH:mm
+    const hora_inicio = dayjs(hora_string).format("HH:mm");
+
+    const regexHora = /^([01]\d|2[0-3]):([0-5]\d)$/;
+    if (!regexHora.test(hora_inicio)) {
+        Alert.alert("Error", "La hora no tiene un formato válido (HH:mm).");
+        return { success: false };
+    }
+
+    try {
+        const response = await api.post("/crearCitas", {
+            descripcion,
+            id_medico,
+            id_paciente,
+            fecha,
+            hora_inicio,
+            estado,
+        });
+
+        if (!response.data.success) {
+            return { success: false, message: response.data.message };
+        }
+
+        return { success: true, cita: response.data };
+    } catch (error) {
+        return {
+            success: false,
+            message: error.response?.data || "Error al reservar la cita",
+        };
+    }
+};
+
+
+export const cargarCitasPorPaciente = async (documento) => {
+    if (documento === "" || documento === null) {
+        console.log("Documento no valido");
+        return {
+            success: false,
+            message: "El documento no valido para cargar citas",
+        };
+    }
+    try {
+        const response = await api.get("citasPorPacientes/" + documento);
+        if (response?.data?.message) {
+           return{
+            success: true , message: response?.data?.message 
+           }
+        }
+        return { success: true, citas: response.data };
+    } catch (error) {
+        return{
+            success: false,
+            message: error.response?.data || "Error al cargar las citas"
+        }
+    }
+};
+
+
+export const cargarCitasConfirmadasPorPaciente = async (documento) => {
+    if (documento === "" || documento === null) {
+        console.log("Documento no valido");
+        return {
+            success: false,
+            message: "El documento no valido para cargar citas",
+        };
+    }
+    try {
+        const response = await api.get("citasPorPacientesConfirmadas/" + documento);
+        if (response?.data?.message) {
+           return{
+            success: true , message: response?.data?.message 
+           }
+        }
+        return { success: true, citas: response.data };
+    } catch (error) {
+        return{
+            success: false,
+            message: error.response?.data || "Error al cargar las citas"
+        }
+    }
+};

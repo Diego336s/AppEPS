@@ -1,7 +1,9 @@
 import { Picker } from "@react-native-picker/picker";
 import React, { useEffect, useState } from "react";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
-import DateTimePicker from "react-native-modal-datetime-picker";
+import DateTimePicker from "@react-native-community/datetimepicker";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
 import {
   View,
   Text,
@@ -10,24 +12,25 @@ import {
   StyleSheet,
   ScrollView,
   Alert,
-
 } from "react-native";
 import api from "../../Src/Services/Conexion";
+import FlashMessage, { showMessage } from "react-native-flash-message";
+import { agendarCita } from "../../Src/Services/PacientesService";
 
-
-
-export default function NuevaCitaScreen() {
-
-const [cargarEspecialidades, setCargarEspecialidades] = useState([]);
-const [cargarMedicosFiltrados, setCargarMedicosFiltrados] = useState([]);
-  const [especialidad, setEspecialidad] = useState("");
-const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
+export default function NuevaCitaScreen({navigation}) {
+ 
+  const [cargarEspecialidades, setCargarEspecialidades] = useState([]);
+  const [cargarMedicosFiltrados, setCargarMedicosFiltrados] = useState([]);
+  const [usuario, setUsuario] = useState(null);
+  const [especialidad, setEspecialidad] = useState(null);
+  const [doctor, setDoctor] = useState(null);
   const [motivo, setMotivo] = useState("");
-  const [doctor, setDoctor] = useState("");
   const [fecha, setFecha] = useState("");
-const [hora, setHora] = useState(new Date().toString());
+  const [hora, setHora] = useState(new Date());
+  const [mostrarConfirmacion, setMostrarConfirmacion] = useState(false);
 
-   // Date Picker
+  // Picker Fecha
+  const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
   const showDatePicker = () => setDatePickerVisibility(true);
   const hideDatePicker = () => setDatePickerVisibility(false);
 
@@ -37,183 +40,291 @@ const [hora, setHora] = useState(new Date().toString());
       "-" +
       (date.getMonth() + 1).toString().padStart(2, "0") +
       "-" +
-     date.getDate().toString().padStart(2, "0");
-      
+      date.getDate().toString().padStart(2, "0");
     setFecha(fDate);
     hideDatePicker();
   };
 
-
-   
+  // Picker Hora
   const [show, setShow] = useState(false);
 
-  const onChange = (event, selectedDate) => {
-    setShow(false); // cierra el picker
-    if (selectedDate) {
-      setHora(selectedDate);
+  useEffect(() => {
+    
+    const CargarPerfil = async()=>{
+        try {
+          const token = await AsyncStorage.getItem("userToken");
+          if(!token){
+            Alert.alert("No se encontro el token del usuario, redirigiendo al login");
+            return;
+          }
+          const response = await api.get("/me");
+          console.log(response.data);
+          setUsuario(response.data);
+        } catch (error) {
+          console.error("Error al cargar el perfil:", error);
+          if(error.isAuthError || error.shoulRedirectToLogin){
+            console.log("Error de autemticacion menejado por el interceptor, redirigiendo al login");
+            return;
+          }
+          if(error.response){
+            Alert.alert("Error del servidor:", `Error ${error.response.status} : ${error.response.data?.message || "Ocurrio un error al cargar el perfil"}`,
+              [{
+                text: "OK",
+                onPress: async()=>{
+                await AsyncStorage.multiRemove(["userToken", "rolUser"]);
+                }
+              }]
+            )
+          }else{
+            Alert.alert(
+              "error",
+              "Ocurrio un error inesperado al cargar el perfil.",
+              [{
+                text: "OK",
+                onPress: async()=>{
+                 await AsyncStorage.multiRemove(["userToken", "rolUser"]);
+                }
+              }]
+            );
+          }
+        }
+      }
+  CargarPerfil();
+
+    const fetchEspecialidades = async () => {
+      try {
+        const response = await api.get("/listarEspecialidades");
+        setCargarEspecialidades(response.data);
+      } catch (error) {
+        console.error("Error al cargar las especialidades:", error);
+      }
+    };
+    fetchEspecialidades();
+  }, []);
+
+  const cargarMedicos = async (idEspecialidad) => {
+    if (idEspecialidad !=="") {
+      try {
+        const response = await api.get(
+          "/filtrarMedicosPorEspecialidad/" + idEspecialidad
+        );
+        setCargarMedicosFiltrados(response.data);
+      } catch (error) {
+        console.error("Error al cargar los médicos:", error);
+      }
+    } else {
+      setDoctor("");
+      setCargarMedicosFiltrados([]);
     }
   };
 
-
-  useEffect(()=>{
-    const cargarEspecialidades = async()=>{
-       try {
-        
-        const response = await api.get("/listarEspecialidades");
-        console.log(response.data);
-        setCargarEspecialidades(response.data);
-      } catch (error) {
-       
-        console.error("Error al cargar las especialidades:", error);
-       
-      }
-    }
-    cargarEspecialidades();
-  },[])
-
-  const cargarMedicos = async($id_especialidad)=>{
-    if($id_especialidad !== ""){
-        try {
-        
-        const response = await api.get("/filtrarMedicosPorEspecialidad/"+$id_especialidad);
-        console.log(response.data);
-        setCargarMedicosFiltrados(response.data);
-      } catch (error) {
-        console.error("Error al cargar los medicos :", error);
-       
-      }
-    }else{
-       setCargarMedicosFiltrados([]);
-     console.log("Debes seleccionar una especialidad");
-    }
-   
+  const handleAgendarCita = async () => {
+  if (!especialidad || !doctor || !fecha || !motivo || !hora) {
+    showMessage({
+      message: "Error ☹️",
+      description: "Debes completar todos los campos 😰",
+      type: "danger",
+    });
+    return;
   }
+
+  try {
+    // Asegurar que la hora se pasa en Date o formato HH:mm
+    const result = await agendarCita(
+      motivo,
+      doctor?.id,
+      usuario?.user.id,
+      fecha,
+      hora
+    );
+
+    if (result?.success) {
+      Alert.alert("Reservación exitosa ✅", "La reservación de la cita ha sido exito, esperando confirmacion de la recepcion 😊");  
+
+      navigation.navigate("DashboardPacientes"); // <-- directo
+    }
+  } catch (error) {
+    showMessage({
+      message: "Error en la reservación 😰",
+      description: error?.message || "Ocurrió un error al reservar",
+      type: "danger",
+    });
+    console.error(error?.message || "Ocurrió un error al reservar")
+  }
+};
+
 
   return (
     <ScrollView style={styles.container}>
+       <FlashMessage position="top"/>
       {/* Encabezado */}
       <Text style={styles.header}>Nueva Cita</Text>
-      <Text style={styles.subHeader}>Completa todos los pasos en esta página</Text>
-
-      {/* Paso 1 - Especialidad */}
-      <View style={styles.card}>
-        <Text style={styles.stepTitle}>1. Especialidad</Text>
-        <Picker
-      
+      <Text style={styles.subHeader}>
+        Completa todos los pasos en esta página
+      </Text>
+{!mostrarConfirmacion && (
+  <View>
+    {/* Paso 1 - Especialidad */}
+    <View style={styles.card}>
+      <Text style={styles.stepTitle}>1. Especialidad</Text>
+      <Picker
         style={styles.select}
-        selectedValue={especialidad}
+        selectedValue={especialidad?.id || ""}
         onValueChange={(itemValue) => {
-       
-            cargarMedicos(itemValue);
-         
-          setEspecialidad(itemValue);      
-         
+          const esp = cargarEspecialidades.find((e) => e.id === itemValue);
+          setEspecialidad(esp || null);
+          cargarMedicos(itemValue);
         }}
-        >
-     <Picker.Item label="-- Selecciona una Especialidad --" value=""/>
-      {cargarEspecialidades.map((especialidad, index) =>(
-    
-        <Picker.Item key={index} label={especialidad?.nombre} value={especialidad?.id} />
-       
-      ))}
+      >
+        <Picker.Item label="-- Selecciona una Especialidad --" value="" />
+        {cargarEspecialidades.map((esp) => (
+          <Picker.Item key={esp.id} label={esp.nombre} value={esp.id} />
+        ))}
+      </Picker>
 
-        </Picker>
+      <TextInput
+        style={[styles.input, { height: 80 }]}
+        placeholder="Describe brevemente el motivo de tu consulta..."
+        placeholderTextColor="#aaa"
+        multiline
+        value={motivo}
+        onChangeText={setMotivo}
+      />
+    </View>
+
+    {/* Paso 2 - Doctor */}
+    <View style={styles.card}>
+      <Text style={styles.stepTitle}>2. Doctor</Text>
+      <Picker
+        selectedValue={doctor?.id || ""}
+        style={styles.select}
+        onValueChange={(itemValue) => {
+          const med = cargarMedicosFiltrados.find((m) => m.id === itemValue);
+          setDoctor(
+            med ? { id: med.id, nombre: `${med.nombre} ${med.apellido}` } : null
+          );
+        }}
+      >
+        <Picker.Item label="-- Selecciona un médico --" value="" />
+        {cargarMedicosFiltrados.map((med) => (
+          <Picker.Item
+            key={med.id}
+            label={`${med.nombre} ${med.apellido}`}
+            value={med.id}
+          />
+        ))}
+      </Picker>
+    </View>
+
+    {/* Paso 3 - Fecha y Hora */}
+    <View style={styles.card}>
+      <Text style={styles.stepTitle}>3. Fecha y Hora</Text>
+      <TouchableOpacity onPress={showDatePicker}>
         <TextInput
-          style={[styles.input, { height: 80 }]}
-          placeholder="Describe brevemente el motivo de tu consulta..."
-          placeholderTextColor="#aaa"
-          multiline
-          value={motivo}
-          onChangeText={setMotivo}
+          style={styles.input}
+          placeholder="Fecha de la cita"
+          placeholderTextColor="#94a3b8"
+          value={fecha}
+          editable={false}
         />
-      </View>
+      </TouchableOpacity>
 
-      {/* Paso 2 - Doctor */}
+      <DateTimePickerModal
+        isVisible={isDatePickerVisible}
+        mode="date"
+        onConfirm={handleConfirm}
+        onCancel={hideDatePicker}
+        minimumDate={new Date()}
+      />
 
-       <View style={styles.card}>
-        <Text style={styles.stepTitle}>2. Doctor</Text>
-       <Picker
-      
-        style={styles.select}
-        selectedValue={doctor}
-        onValueChange={(itemValue) => {
-          setDoctor(itemValue)
-          
-        }}
-        >
-      
-       <Picker.Item label="-- Selecciona una medico --" value=""/>
-       {cargarMedicosFiltrados.map((medicos, index) =>(
-        <Picker.Item key={index} label={medicos?.nombre+" "+medicos?.apellido} value={medicos?.nombre+" "+medicos?.apellido}/>
-       ))}
-        </Picker>
-      </View>
-     
-
-      {/* Paso 3 - Fecha y Hora */}
-      <View style={styles.card}>
-        <Text style={styles.stepTitle}>3. Fecha y Hora</Text>
-        <TouchableOpacity onPress={showDatePicker}>
-                 <TextInput
-                   style={styles.input}
-                   placeholder="Fecha de la cita"
-                   placeholderTextColor="#94a3b8"
-                   value={fecha}
-                   editable={false}
-                 />
-               </TouchableOpacity>
-       
-               <DateTimePickerModal
-                 isVisible={isDatePickerVisible}
-                 mode="date"
-                 onConfirm={handleConfirm}
-                 onCancel={hideDatePicker}
-               />
-       
+      <TouchableOpacity onPress={() => setShow(true)}>
         <TextInput
           style={styles.input}
           placeholder="Hora de la cita"
-          placeholderTextColor="#aaa"  
-               
-          onPress={()=>setShow(true)}
+          placeholderTextColor="#aaa"
+          value={
+            hora
+              ? hora.toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })
+              : ""
+          }
+          editable={false}
         />
+      </TouchableOpacity>
 
-         {show && (
-       <DateTimePicker
-          value={hora}
-          mode="time"          // 👈 solo hora
-          is24Hour={true}      // 👈 formato 24 horas (pon false si quieres AM/PM)
-          display="spinner"    // 👈 prueba con "clock", "spinner", "default"
-          onChange={onChange}
+      {show && (
+        <DateTimePicker
+          value={hora || new Date()} // fallback por si hora está null
+          mode="time"
+          is24Hour={true}
+          display="spinner"
+          onChange={(event, selectedDate) => {
+            setShow(false);
+            if (selectedDate) {
+              setHora(selectedDate);
+            }
+          }}
         />
       )}
-      </View>
-
-      {/* Paso 4 - Confirmar */}
-      <View style={styles.card}>
-        <Text style={styles.stepTitle}>4. Confirmar</Text>
-        <Text style={styles.confirmText}>          
-          Motivo: {motivo || "-"} {"\n"}
-          Doctor: {doctor || "-"} {"\n"}
-          Fecha: {fecha || "-"} {"\n"}
-          Hora: {hora || "-"}
-        </Text>
-      </View>
-
-      {/* Botón Final */}
-      <TouchableOpacity style={styles.button}>
+    </View>
+    <TouchableOpacity style={styles.button} onPress={()=>setMostrarConfirmacion(true)}>
         <Text style={styles.buttonText}>Agendar Cita</Text>
       </TouchableOpacity>
+  </View>
+)}
+
+   
+      {/* Paso 4 - Confirmar */}
+          {mostrarConfirmacion && (
+  <View>
+    <View style={styles.card}>
+      <Text style={styles.stepTitle}>4. Confirmar</Text>
+      <Text style={styles.confirmText}>
+        Paciente: {usuario?.user.nombre + " " + usuario?.user.apellido || "-"} {"\n"}
+        Especialidad: {especialidad?.nombre || "-"} {"\n"}
+        Motivo: {motivo || "-"} {"\n"}
+        Doctor: {doctor?.nombre || "-"} {"\n"}
+        Fecha: {fecha || "-"} {"\n"}
+        Hora:{" "}
+        {hora
+          ? hora.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+          : "-"}
+      </Text>      
+    </View>
+
+    <View>
+      <TouchableOpacity
+        style={styles.buttonConfirmar}
+        onPress={handleAgendarCita}
+      >
+        <Text style={styles.buttonText}>Confirmar Cita</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={[styles.buttonVolver]} // opcional: distinto color para "Volver"
+        onPress={() => setMostrarConfirmacion(false)}
+      >
+        <Text style={styles.buttonText}>Volver</Text>
+      </TouchableOpacity>
+    </View>
+      
+
+
+  </View>
+)}
+
+
+      
+ 
+    
+    
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#0b1a2e",
-    padding: 16,
-  },
+  container: { flex: 1, backgroundColor: "#0b1a2e", padding: 16 },
   header: {
     fontSize: 22,
     fontWeight: "bold",
@@ -242,7 +353,7 @@ const styles = StyleSheet.create({
   select: {
     backgroundColor: "#1e3a5f",
     borderRadius: 8,
-    padding: 10,
+    padding: 3,
     color: "#fff",
     marginBottom: 12,
   },
@@ -253,11 +364,7 @@ const styles = StyleSheet.create({
     color: "#fff",
     marginBottom: 12,
   },
-  confirmText: {
-    color: "#ddd",
-    fontSize: 14,
-    lineHeight: 22,
-  },
+  confirmText: { color: "#ddd", fontSize: 14, lineHeight: 22 },
   button: {
     backgroundColor: "#1e88e5",
     padding: 14,
@@ -265,9 +372,19 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 40,
   },
-  buttonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "bold",
+ buttonVolver: {
+    backgroundColor: "#665d5dff",
+    padding: 14,
+    borderRadius: 10,
+    alignItems: "center",
+    marginBottom: 40,
   },
+  buttonConfirmar: {
+    backgroundColor: "#1e88e5",
+    padding: 14,
+    borderRadius: 10,
+    alignItems: "center",
+    marginBottom: 15,
+  },
+  buttonText: { color: "#fff", fontSize: 16, fontWeight: "bold" },
 });

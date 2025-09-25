@@ -1,20 +1,24 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import api from "./Conexion";
-import { Alert } from "react-native";
+
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
+import { Alert } from "react-native";
 
 dayjs.extend(customParseFormat);
 
 
 export const loginPaciente = async (correo, clave) => {
+
     try {
         const response = await api.post("/loginPaciente", { correo, clave });
         const token = response.data.token; //Token es la palabra que alla puesto como llave en la respuesta del servidor
         console.log("Respuesta del servidor:", response.data);
         console.log("Token recibido:", token);
+        const rol = "Paciente";
         if (token) {
             await AsyncStorage.setItem("userToken", token);
+            await AsyncStorage.setItem("rolUser", rol);
         } else {
             console.error("No se recibio el token en la respuesta");
         }
@@ -34,22 +38,59 @@ export const loginPaciente = async (correo, clave) => {
 export const logoutPaciente = async () => {
     try {
         const response = await api.post("/logoutPaciente");
-        const result = await AsyncStorage.removeItem("userToken");
+        await AsyncStorage.multiRemove(["userToken", "rolUser"]);
         if (!response.data.success) {
             console.error("Error del servidor:", response.data.message);
         }
-        if (!result) {
-            console.error("Error al intentar borrar el token del localStorage");
-        }
         return { success: true, message: response.data.message };
     } catch (error) {
-       
+
         return {
             success: false,
             message: error.response ? error.response.data : "Error de conexion",
         };
     }
 };
+
+export const cambiarClave = async (clave, id) => {
+    try {
+        const response = await api.post("/cambiarClave/" + id, { clave });
+        if (!response.data.success) {
+            return { success: false, message: "No se pudo cambiar la clave, reintentar nuevamente" }
+        }
+
+        await AsyncStorage.multiRemove(["userToken", "rolUser"]);
+        return { success: true, message: "Cambio de clave exitoso, inicia sesion nuevamente" }
+
+
+    } catch (error) {
+        console.error("Error", error.message)
+        return {
+            success: false,
+            message: error.message
+        }
+    }
+}
+
+export const cambiarCorreo = async (correo, id) => {
+    try {
+        const response = await api.post("/cambiarCorreo/" + id, { correo });
+        if (!response.data.success) {
+            return { success: false, message: "No se pudo cambiar el correo, reintentar nuevamente" }
+        }
+
+        await AsyncStorage.multiRemove(["userToken", "rolUser"]);
+        return { success: true, message: "Cambio de correo exitoso, inicia sesion nuevamente" }
+
+
+    } catch (error) {
+        console.error("Error", error.message)
+        return {
+            success: false,
+            message: error.message
+        }
+    }
+}
 
 export const registrarPaciente = async (
     nombre,
@@ -69,7 +110,7 @@ export const registrarPaciente = async (
             return;
         }
         console.log("Fecha de nacimiento", fecha_nacimiento);
-       
+
         console.log("Fecha ya con formato", fecha_nacimiento);
         const telefono = parseInt(telefonoString);
         const response = await api.post("/crearPaciente", {
@@ -84,7 +125,7 @@ export const registrarPaciente = async (
             correo,
             clave,
         });
-      
+
         const token = response.data.token_access; //token_access es la palabra que alla puesto como llave en la respuesta del servidor
         console.log("Respuesta del servidor:", response.data);
         console.log("Token recibido:", token);

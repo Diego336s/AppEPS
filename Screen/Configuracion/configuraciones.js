@@ -3,9 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Switch, ScrollView } from "re
 import { useState } from "react";
 import { logoutPaciente } from "../../Src/Services/AuthService";
 export default function ConfiguracionesScreen({navigation}) {
-  const [notificaciones, setNotificaciones] = useState(true);
-  const [temaOscuro, setTemaOscuro] = useState(false);
-
+  
   return (
     <ScrollView style={styles.container}>
      
@@ -21,29 +19,7 @@ export default function ConfiguracionesScreen({navigation}) {
         </TouchableOpacity>
       </View>
 
-      {/* Sección: Preferencias */}
-      <View style={styles.card}>
-        <Text style={styles.sectionTitle}>Preferencias</Text>
-
-        <View style={styles.switchOption}>
-          <Text style={styles.optionText}>🔔 Notificaciones</Text>
-          <Switch
-            value={notificaciones}
-            onValueChange={setNotificaciones}
-            thumbColor={notificaciones ? "#3b82f6" : "#aaa"}
-          />
-        </View>
-        <View style={styles.switchOption}>
-          <Text style={styles.optionText}>🌙 Tema Oscuro</Text>
-          <Switch
-            value={temaOscuro}
-            onValueChange={setTemaOscuro}
-            thumbColor={temaOscuro ? "#3b82f6" : "#aaa"}
-          />
-        </View>
-
      
-      </View>
 
       {/* Sección: Otros */}
       <View style={styles.card}>

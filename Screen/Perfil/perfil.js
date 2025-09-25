@@ -30,7 +30,7 @@ const CargarPerfil = async()=>{
             [{
               text: "OK",
               onPress: async()=>{
-                await AsyncStorage.removeItem("userToken");
+                await AsyncStorage.multiRemove(["userToken", "rolUser"]);
               }
             }]
           )
@@ -41,7 +41,7 @@ const CargarPerfil = async()=>{
             [{
               text: "OK",
               onPress: async()=>{
-                await AsyncStorage.removeItem("userToken");
+                 await AsyncStorage.multiRemove(["userToken", "rolUser"]);
               }
             }]
           );
