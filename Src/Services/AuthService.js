@@ -22,16 +22,28 @@ export const loginPaciente = async (correo, clave) => {
         } else {
             console.error("No se recibio el token en la respuesta");
         }
+
+        if (!response.data.success) {
+            return {
+                success: false,
+                message: response.data.message
+            }
+        }
         return { success: true, token };
     } catch (error) {
-        console.error(
-            "Error al inicar sesion:",
-            error.response ? error.response.data : error.message,
-        );
-        return {
-            success: false,
-            message: error.response ? error.response.data : "Error de conexion",
-        };
+        if (error.response) {
+            console.log("Error al iniciar sesión:", error.response.data);
+            return {
+                success: false,
+                message: error.response.data.message || "Error en las credenciales",
+            };
+        } else {
+            console.log("Error al iniciar sesión:", error.message);
+            return {
+                success: false,
+                message: "Error de conexión con el servidor",
+            };
+        }
     }
 };
 
@@ -76,7 +88,7 @@ export const cambiarCorreo = async (correo, id) => {
     try {
         const response = await api.post("/cambiarCorreo/" + id, { correo });
         if (!response.data.success) {
-            return { success: false, message: "No se pudo cambiar el correo, reintentar nuevamente" }
+            return { success: false, message: response.data.message ? response.data.message : "No se pudo cambiar el correo, reintentar nuevamente" }
         }
 
         await AsyncStorage.multiRemove(["userToken", "rolUser"]);

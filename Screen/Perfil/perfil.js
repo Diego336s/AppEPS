@@ -1,18 +1,33 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useEffect, useState } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, Image, Alert } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, Image, Alert, KeyboardAvoidingView, ScrollView, Platform } from "react-native";
 import api from "../../Src/Services/Conexion";
 
-export default function PerfilScreen({navigation}) {
+export default function PerfilScreen({ navigation }) {
   const [usuario, setUsuario] = useState(null);
-const [cargando, setCargando] = useState(true);
+  const [cargando, setCargando] = useState(true);
+  const [rol, setRol] = useState(null);
 
- 
-useEffect(()=>{
-const CargarPerfil = async()=>{
+  const cargarRol = async () => {
+
+    const rolUsuario = await AsyncStorage.getItem("rolUser");
+    if (!rolUsuario) {
+      showMessage({
+        message: "Error de rol 📞",
+        description: "No se pudo cargar el rol porfavor, volver a iniciar sesion 😰",
+        type: "danger"
+      });
+      await AsyncStorage.multiRemove(["userToken", "rolUser"]);
+    }
+    setRol(rolUsuario);
+
+  }
+
+  useEffect(() => {
+    const CargarPerfil = async () => {
       try {
         const token = await AsyncStorage.getItem("userToken");
-        if(!token){
+        if (!token) {
           Alert.alert("No se encontro el token del usuario, redirigiendo al login");
           return;
         }
@@ -21,82 +36,107 @@ const CargarPerfil = async()=>{
         setUsuario(response.data);
       } catch (error) {
         console.error("Error al cargar el perfil:", error);
-        if(error.isAuthError || error.shoulRedirectToLogin){
+        if (error.isAuthError || error.shoulRedirectToLogin) {
           console.log("Error de autemticacion menejado por el interceptor, redirigiendo al login");
           return;
         }
-        if(error.response){
+        if (error.response) {
           Alert.alert("Error del servidor:", `Error ${error.response.status} : ${error.response.data?.message || "Ocurrio un error al cargar el perfil"}`,
             [{
               text: "OK",
-              onPress: async()=>{
+              onPress: async () => {
                 await AsyncStorage.multiRemove(["userToken", "rolUser"]);
               }
             }]
           )
-        }else{
+        } else {
           Alert.alert(
             "error",
             "Ocurrio un error inesperado al cargar el perfil.",
             [{
               text: "OK",
-              onPress: async()=>{
-                 await AsyncStorage.multiRemove(["userToken", "rolUser"]);
+              onPress: async () => {
+                await AsyncStorage.multiRemove(["userToken", "rolUser"]);
               }
             }]
           );
         }
-      }finally{
+      } finally {
         setCargando(false);
       }
     }
-CargarPerfil();
-},[]);
-    
-    
- 
+    CargarPerfil();
+    cargarRol();
+  }, []);
+
+
+
 
 
   return (
-    <View style={styles.container}>
-      {/* Encabezado */}
-      <View style={styles.header}>
-        <Image
-          source={{ uri: "https://cdn-icons-png.flaticon.com/512/3135/3135715.png" }}
-          style={styles.avatar}
-        />
-        <Text style={styles.nombre}>{usuario?.user.nombre}</Text>
-        <Text style={styles.documento}>CC: {usuario?.user.documento}</Text>
-      </View>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      style={{ flex: 1 }}
+    >
+      <ScrollView contentContainerStyle={styles.scroll}>
+        <View style={styles.container}>
+          {/* Encabezado */}
+          <View style={styles.header}>
+            <Image
+              source={{ uri: "https://cdn-icons-png.flaticon.com/512/3135/3135715.png" }}
+              style={styles.avatar}
+            />
+            <Text style={styles.nombre}>{usuario?.user.nombre}</Text>
+            <Text style={styles.documento}>CC: {usuario?.user.documento}</Text>
+          </View>
 
-      {/* Información Personal */}
-      <View style={styles.card}>
-        <Text style={styles.sectionTitle}>Información Personal</Text>
-        <Text style={styles.label}>📌 Nombre Completo</Text>
-        <Text style={styles.value}>{usuario?.user.nombre} {usuario?.user.apellido}</Text>
+          {/* Información Personal */}
+          <View style={styles.card}>
+            <Text style={styles.sectionTitle}>Información Personal</Text>
+            <Text style={styles.label}>📌 Nombre Completo</Text>
+            <Text style={styles.value}>{usuario?.user.nombre} {usuario?.user.apellido}</Text>
 
-        <Text style={styles.label}>🆔 Documento</Text>
-        <Text style={styles.value}>{usuario?.user.documento}</Text>
+            <Text style={styles.label}>🆔 Documento</Text>
+            <Text style={styles.value}>{usuario?.user.documento}</Text>
 
-        <Text style={styles.label}>🎂 Fecha de Nacimiento</Text>
-        <Text style={styles.value}>{usuario?.user.fecha_nacimiento}</Text>
-      </View>
+            {rol === "Paciente" && (
+              <View>
+                <Text style={styles.label}>🎂 Fecha de Nacimiento</Text>
+                <Text style={styles.value}>{usuario?.user.fecha_nacimiento}</Text>
 
-      {/* Contacto */}
-      <View style={styles.card}>
-        <Text style={styles.sectionTitle}>Contacto</Text>
-        <Text style={styles.label}>📧 Correo</Text>
-        <Text style={styles.value}>{usuario?.user.correo}</Text>
+                <Text style={styles.label}>🩸 RH</Text>
+                <Text style={styles.value}>{usuario?.user.rh}</Text>
 
-        <Text style={styles.label}>📱 Teléfono</Text>
-        <Text style={styles.value}>{usuario?.user.telefono}</Text>
-      </View>
+                <Text style={styles.label}>🚻 Sexo</Text>
+                <Text style={styles.value}>{usuario?.user.sexo}</Text>
 
-      {/* Botón de editar */}
-      <TouchableOpacity onPress={()=>{navigation.navigate("Editar_perfil")}} style={styles.botonEditar}>
-        <Text style={styles.botonTexto}>✏️ Editar Perfil</Text>
-      </TouchableOpacity>
-    </View>
+                <Text style={styles.label}>🌍 Pais proveniente</Text>
+                <Text style={styles.value}>{usuario?.user.nacionalidad}</Text>
+              </View>
+
+            )}
+          </View>
+
+
+
+
+          {/* Contacto */}
+          <View style={styles.card}>
+            <Text style={styles.sectionTitle}>Contacto</Text>
+            <Text style={styles.label}>📧 Correo</Text>
+            <Text style={styles.value}>{usuario?.user.correo}</Text>
+
+            <Text style={styles.label}>📱 Teléfono</Text>
+            <Text style={styles.value}>{usuario?.user.telefono}</Text>
+          </View>
+
+          {/* Botón de editar */}
+          <TouchableOpacity onPress={() => { navigation.navigate("Editar_perfil") }} style={styles.botonEditar}>
+            <Text style={styles.botonTexto}>✏️ Editar Perfil</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -123,4 +163,9 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   botonTexto: { color: "#fff", fontWeight: "bold" },
+  scroll: {
+    flexGrow: 1,
+    justifyContent: "center",
+    backgroundColor: "#0f172a"
+  },
 });

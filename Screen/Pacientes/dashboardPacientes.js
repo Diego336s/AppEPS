@@ -1,57 +1,159 @@
-import React, {useEffect, useState} from "react";
+import React, { useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import api from "../../Src/Services/Conexion";
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert } from "react-native";
 import { Ionicons, MaterialIcons, FontAwesome5 } from "@expo/vector-icons";
 import { cargarCitasConfirmadasPorPaciente } from "../../Src/Services/PacientesService";
+import FlashMessage, { showMessage } from "react-native-flash-message";
 
 
+export default function DashboardScreen({ navigation }) {
+  const [usuario, setUsuario] = useState(null)
+  const [citas, setCitas] = useState(null);
+  const [mensaje, setMensaje] = useState(null);
+  const [citasEsteMes, setCitasEsteMes] = useState("");
+  const [totalCita, setTotalCita] = useState("");
 
-export default function DashboardScreen({navigation}) {
-const [usuario, setUsuario] = useState(null)
-const [citas, setCitas] = useState(null);
-const [mensaje, setMensaje] = useState(null);
   useEffect(() => {
-  const CargarPerfil = async () => {
-    try {
-      const token = await AsyncStorage.getItem("userToken");
-      if (!token) {
-        await AsyncStorage.multiRemove(["userToken", "rolUser"]);
-        Alert.alert("No se encontró el token, redirigiendo al login");
-        return;
+    const CargarPerfil = async () => {
+      try {
+        const token = await AsyncStorage.getItem("userToken");
+        if (!token) {
+          await AsyncStorage.multiRemove(["userToken", "rolUser"]);
+          Alert.alert("No se encontró el token, redirigiendo al login");
+          return;
+        }
+        const response = await api.get("/me");
+        setUsuario(response.data);
+      } catch (error) {
+        const mensaje =
+          error?.response?.data?.message ||
+          error?.message ||
+          "Error interno, intente más tarde";
+        Alert.alert("Error", mensaje);
       }
-      const response = await api.get("/me");
-      setUsuario(response.data);
-    } catch (error) {
-      console.error("Error al cargar el perfil:", error);
-    }
-  };
+    };
 
-  CargarPerfil();
-}, []);
+    CargarPerfil();
+  }, []);
 
-useEffect(() => {
-  if (!usuario?.user?.documento) return;
   const CargarCitas = async () => {
+    if (!usuario?.user?.documento) return;
     try {
       const response = await cargarCitasConfirmadasPorPaciente(usuario.user.documento);
       if (response.message) {
-        setMensaje(response.message);
+        setMensaje(response.message || "No hay citas programadas");
         setCitas([]);
         return;
       }
       setCitas(response.citas || []);
-    } catch (error) {
-      console.error("Error al cargar las citas: " + error);
-      Alert.alert("Error, no se puede cargar las citas del paciente.");
-    }
-  };
-  CargarCitas();
-}, [usuario]);
 
+
+
+    } catch (error) {
+      const mensaje =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Error interno, intente más tarde";
+      Alert.alert("Error", mensaje);
+    }
+
+  };
+
+  useEffect(() => {
+    CargarCitas();
+
+    const citasEsteMes = async () => {
+      if (!usuario?.user?.id) return;
+      const id = usuario?.user?.id;
+      try {
+        const response = await api.get("citasEsteMesPorPaciente/" + id);
+        setCitasEsteMes(response.data.citas);
+      } catch (error) {
+        const mensaje =
+          error?.response?.data?.message ||
+          error?.message ||
+          "Error interno, intente más tarde";
+        Alert.alert("Error", mensaje);
+      }
+    }
+    citasEsteMes();
+
+    const totalCitas = async () => {
+      if (!usuario?.user?.id) return;
+      const id = usuario?.user?.id;
+      try {
+        const response = await api.get("totalCitasPorPaciente/" + id);
+        setTotalCita(response.data.citas);
+      } catch (error) {
+        const mensaje =
+          error?.response?.data?.message ||
+          error?.message ||
+          "Error interno, intente más tarde";
+        Alert.alert("Error", mensaje);
+      }
+    }
+    totalCitas();
+  }, [usuario]);
+
+  const alertaCancelarCita = (id) => {
+
+    Alert.alert(
+      "Cancelar Cita",
+      "¿Seguro que quieres cancelar la cita?",
+      [
+        {
+          text: "No", // Texto del botón
+          onPress: () => console.log("Cancelado ❌"),
+          style: "cancel", // estilo especial para iOS
+        },
+        {
+          text: "Sí",
+          onPress: () => {
+            console.log("Cita cancelada ✅");
+            // aquí llamas a la función que cancela la cita
+            cancelarCita(id);
+          },
+        },
+      ],
+      { cancelable: true } // permite cerrar tocando fuera
+    );
+
+
+  }
+
+
+  const cancelarCita = async (id) => {
+    if (id === "") {
+      Alert.alert("No se a podido obtener el ID de la cita, Intenta nuevamente")
+    }
+    const estado = "Cancelada";
+    try {
+      const response = await api.post("cancelarCita/" + id, { estado });
+      if (!response.data.success) {
+        Alert.alert("Error ❌", response?.data.message || "Error al intentar cancelar la cita")
+      }
+
+      showMessage({
+        message: "Cita cancelada 🫡",
+        description: "Su cita ha sido cancelada exitosamente",
+        type: "success"
+      });
+      CargarCitas();
+
+    } catch (error) {
+      const mensaje =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Error interno, intente más tarde";
+      Alert.alert("Error", mensaje);
+    }
+
+  }
 
   return (
     <ScrollView style={styles.container}>
+      <FlashMessage position="top" />
       {/* Header */}
       <View style={styles.header}>
         <Ionicons name="person-circle" size={50} color="white" />
@@ -64,70 +166,80 @@ useEffect(() => {
       {/* Resumen rápido */}
       <View style={styles.summaryRow}>
         <View style={styles.summaryCard}>
-          <Ionicons name="calendar" size={24} color="white" />
-          <Text style={styles.summaryNumber}>5 días</Text>
-          <Text style={styles.summaryText}>Próxima Cita</Text>
+          <MaterialIcons name="monitor-heart" size={24} color="white" />
+          <Text style={styles.summaryNumber}>{totalCita}</Text>
+          <Text style={styles.summaryText}>Total de citas</Text>
         </View>
 
         <View style={styles.summaryCard}>
-          <MaterialIcons name="monitor-heart" size={24} color="white" />
-          <Text style={styles.summaryNumber}>3</Text>
+
+          <Ionicons name="calendar" size={24} color="white" />
+          <Text style={styles.summaryNumber}>{citasEsteMes}</Text>
           <Text style={styles.summaryText}>Citas este mes</Text>
         </View>
 
-        <View style={styles.summaryCard}>
-          <Ionicons name="notifications" size={24} color="white" />
-          <Text style={styles.summaryNumber}>2</Text>
-          <Text style={styles.summaryText}>Recordatorios</Text>
-        </View>
+
       </View>
 
       {/* Acciones rápidas */}
       <Text style={styles.sectionTitle}>Acciones Rápidas</Text>
       <View style={styles.actionsRow}>
-        <TouchableOpacity onPress={()=>{navigation.navigate("crearCitas")}} style={[styles.actionCard, { backgroundColor: "#2563eb" }]}>
+        <TouchableOpacity onPress={() => { navigation.navigate("formCitas") }} style={[styles.actionCard, { backgroundColor: "#2563eb" }]}>
           <Ionicons name="add-circle" size={22} color="white" />
           <Text style={styles.actionText}>Nueva Cita</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity  onPress={()=>{navigation.navigate("buscarDoctores")}}  style={[styles.actionCard, { backgroundColor: "#22c55e" }]}>
+        <TouchableOpacity onPress={() => { navigation.navigate("buscarDoctores") }} style={[styles.actionCard, { backgroundColor: "#22c55e" }]}>
           <Ionicons name="search" size={22} color="white" />
           <Text style={styles.actionText}>Buscar Doctor</Text>
         </TouchableOpacity>
       </View>
 
-      <View style={styles.actionsRow}>     
-        <TouchableOpacity onPress={()=>{navigation.navigate("historialPaciente")}} style={[styles.actionCard, { backgroundColor: "#a855f7" }]}>
+      <View style={styles.actionsRow}>
+        <TouchableOpacity onPress={() => { navigation.navigate("historialPaciente") }} style={[styles.actionCard, { backgroundColor: "#a855f7" }]}>
           <FontAwesome5 name="heartbeat" size={20} color="white" />
           <Text style={styles.actionText}>Historial citas</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Próximas citas */}     
-     <Text style={styles.sectionTitle}>Próximas Citas</Text>
-{mensaje && <Text style={{ color: "white" }}>{mensaje}</Text>}
-{citas && citas.map((itemsCita, index) => (
-  
-  <View key={index} style={styles.appointmentCard}>
-    <Text style={styles.doctor}>Doc. {itemsCita?.nombre_medico} {itemsCita?.apellido_medico}</Text>
-    <Text style={styles.specialty}>{itemsCita?.especialidad}</Text>   
-    <Text style={styles.date}>📅 {itemsCita?.fecha} 🕒 {itemsCita?.hora_inicio}</Text>
-    <Text style={styles.location}>📝 {itemsCita?.descripcion}</Text>
-   
+      {/* Próximas citas */}<Text style={styles.sectionTitle}>Próximas Citas</Text>
+      {mensaje && (
+        <Text style={{ color: "white" }}>
+          {typeof mensaje === "object" ? mensaje.message : mensaje}
+        </Text>
+      )}
+      {citas && citas.map((itemsCita, index) => (
+        <View key={index} style={styles.appointmentCard}>
+          <Text style={styles.doctor}>
+            Doc. {itemsCita?.nombre_medico} {itemsCita?.apellido_medico}
+          </Text>
+          <Text style={styles.specialty}>                     
+              { itemsCita?.especialidad}
+          </Text>
+          <Text style={styles.date}>
+            📅 {itemsCita?.fecha} 🕒 {itemsCita?.hora_inicio}
+          </Text>
+          <Text style={styles.location}>📝 {itemsCita?.descripcion}</Text>
 
-    <View style={styles.buttonsRow}>
-      <TouchableOpacity style={styles.rescheduleBtn}>
-        <Text style={styles.btnText}>Reprogramar</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.cancelBtn}>
-        <Text style={styles.btnText}>Cancelar</Text>
-      </TouchableOpacity>
-    </View>
-  </View>
-))}
+          <View style={styles.buttonsRow}>
+            <TouchableOpacity
+              onPress={() => navigation.navigate("formCitas", { id: itemsCita?.id })}
+              style={styles.rescheduleBtn}
+            >
+              <Text style={styles.btnText}>Reprogramar</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => alertaCancelarCita(itemsCita?.id)}
+              style={styles.cancelBtn}
+            >
+              <Text style={styles.btnText}>Cancelar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      ))}
 
 
-     
+
     </ScrollView>
   );
 }

@@ -65,19 +65,47 @@ export const cargarCitasPorPaciente = async (documento) => {
     try {
         const response = await api.get("citasPorPacientes/" + documento);
         if (response?.data?.message) {
-           return{
-            success: true , message: response?.data?.message 
-           }
+            return {
+                success: true, message: response?.data?.message
+            }
         }
         return { success: true, citas: response.data };
     } catch (error) {
-        return{
+        return {
             success: false,
             message: error.response?.data || "Error al cargar las citas"
         }
     }
 };
 
+export const actualizarPacientes = async (id, nombre, apellido, documento, telefono) => {
+    if (id === "" || nombre === "" || apellido === "" || documento === "", telefono === "") {
+        return {
+            success: false,
+            message: "Faltan campos requeridos para hacer la peticion"
+        }
+    }
+
+    try {
+        const response = await api.put("actualizarPaciente/" + id, { nombre, apellido, documento, telefono })
+        if (!response?.data.success) {
+            return {
+                success: false,
+            message: response?.data?.message
+            }
+        }
+        return {
+            success: true,
+            message: "El paciente" + " " + nombre + " " + apellido + " sea actualizado correctamente"
+        }
+    } catch (error) {
+        return {
+            success: false,
+            message: error?.response?.data.message || "Error al actualizar el paciente"
+        }
+
+    }
+}
 
 export const cargarCitasConfirmadasPorPaciente = async (documento) => {
     if (documento === "" || documento === null) {
@@ -90,13 +118,13 @@ export const cargarCitasConfirmadasPorPaciente = async (documento) => {
     try {
         const response = await api.get("citasPorPacientesConfirmadas/" + documento);
         if (response?.data?.message) {
-           return{
-            success: true , message: response?.data?.message 
-           }
+            return {
+                success: true, message: response?.data?.message
+            }
         }
         return { success: true, citas: response.data };
     } catch (error) {
-        return{
+        return {
             success: false,
             message: error.response?.data || "Error al cargar las citas"
         }

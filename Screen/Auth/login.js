@@ -17,196 +17,208 @@ import { loginPaciente } from "../../Src/Services/AuthService";
 import FlashMessage, { showMessage } from "react-native-flash-message";
 
 export default function Login({ navigation }) {
-     const [ocultar, setOcultar] = useState(false);
-  
+  const [ocultar, setOcultar] = useState(false);
+  const [ocultarRoles, setOcultarRoles] = useState(false);
   const [userType, setUserType] = useState("Paciente");
   const [correo, setCorreo] = useState("");
   const [clave, setClave] = useState("");
-const [esperando, setEsperando] = useState(false);
-  const handleLogin = async()=>{
+  const [esperando, setEsperando] = useState(false);
+  const handleLogin = async () => {
     setEsperando(true);
-    if(!correo || !clave){
-       showMessage({
-               message:"Error ☹️",
-               description: "Debes completar todos los campos 😰",
-               type: "danger"
-             });
-             setEsperando(false);
-             return;
+    if (!correo || !clave) {
+      showMessage({
+        message: "Error ☹️",
+        description: "Debes completar todos los campos 😰",
+        type: "danger"
+      });
+      setEsperando(false);
+      return;
     }
     try {
-      if(userType === "Paciente"){
-      const result = await loginPaciente(correo, clave);
-      if(result.success){
-      showMessage({
-               message:"Bienvenido 😊",
-               description: "Inicio de sesion exitoso ✅",
-               type: "success"
-             });
-      }else{
-        Alert.alert("Error de Login", result.message || "ocurrio un error al inicar sesion",);
-      }
-    
+      if (userType === "Paciente") {
+        const response = await loginPaciente(correo, clave);
+        if (response.success) {
+          showMessage({
+            message: "Bienvenido 😊",
+            description: "Inicio de sesion exitoso ✅",
+            type: "success"
+          });
+        } else {
+          Alert.alert("Error de Login", response?.message || "ocurrio un error al inicar sesion",);
+        }
+
       }
 
     } catch (error) {
-      console.error("Error inesperado en Login:", error);
+      console.error("Error inesperado en Login:", error.data.message);
       Alert.alert("Error:", "Ocurrio un error inesperado al intentar iniciar sesion")
-    }finally{
+    } finally {
       setEsperando(false);
     }
   }
-  
-  
 
- 
- 
+
+
+
+
   return (
-      <KeyboardAvoidingView
+    <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
-    style={{ flex: 1 }}
-      >
-    <ScrollView contentContainerStyle={styles.scroll}>
-      <View style={styles.container}>
- <FlashMessage position="top"/>
-         
-        <Text style={styles.title}>Selecciona el tipo de usuario</Text>
+      style={{ flex: 1 }}
+    >
+      <ScrollView contentContainerStyle={styles.scroll}>
+        <View style={styles.container}>
+          <FlashMessage position="top" />
+          {!ocultarRoles && (
+            <View>
+              <Text style={styles.title}>Selecciona el tipo de usuario</Text>
 
-        {/* Botones de roles */}
-        <TouchableOpacity
-          style={[
-            styles.roleButton,
-            userType === "Paciente" && styles.roleSelected,
-          ]}
-          onPress={() => {
-            setUserType("Paciente");
-            setOcultar(false);
-         
-          }}
-        >
-            <View style={styles.alinear}>
-          <MaterialIcons name="people" size={24} color="white" />
-          <Text style={styles.roleText}>Pacientes</Text>
-          </View>
-          <Text style={styles.roleSub}>Acceso para pacientes y familiares</Text>
-        </TouchableOpacity>
+              {/* Botones de roles */}
+              <TouchableOpacity
+                style={[
+                  styles.roleButton,
+                  userType === "Paciente" && styles.roleSelected,
+                ]}
+                onPress={() => {
+                  setUserType("Paciente");
+                  setOcultar(false);
 
-        <TouchableOpacity
-          style={[
-            styles.roleButton,
-            userType === "Doctor" && styles.roleSelected,
-          ]}
-          onPress={() => {
-            setUserType("Doctor");
-            setOcultar(true);
-     
-          }}
-        >
+                }}
+              >
+                <View style={styles.alinear}>
+                  <MaterialIcons name="people" size={24} color="white" />
+                  <Text style={styles.roleText}>Pacientes</Text>
+                </View>
+                <Text style={styles.roleSub}>Acceso para pacientes y familiares</Text>
+              </TouchableOpacity>
 
-            
-           <View style={styles.alinear}>
-           <FontAwesome6 name="user-doctor" size={24} color="white" />
- <Text style={styles.roleText}>Doctores</Text>
-           </View>
-         
-          <Text style={styles.roleSub}>Acceso para médicos especialistas</Text>
-        </TouchableOpacity>
- <TouchableOpacity
-          style={[
-            styles.roleButton,
-            userType === "Administradores" && styles.roleSelected,
-          ]}
-          onPress={() => {
-            setUserType("Administradores");
-            setOcultar(true);
-           
-          }}
-        >
-            <View style={styles.alinear}>
-             <MaterialIcons name="admin-panel-settings" size={24} color="white" />
- <Text style={styles.roleText}>Administradores</Text>
-           </View>
-         
-          <Text style={styles.roleSub}>Acceso para administradores del sistema</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity
-          style={[
-            styles.roleButton,
-            userType === "Recepcionista" && styles.roleSelected,
-          ]}
-          onPress={() => {
-            setUserType("Recepcionista");
-            setOcultar(true);
-            
-          }}
-        >
-             <View style={styles.alinear}>
-            <Fontisto name="headphone" size={24} color="white" />
-          <Text style={styles.roleText}>Recepcionistas</Text>
-             </View>
-           
-          <Text style={styles.roleSub}>Acceso para personal administrativo</Text>
-        </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.roleButton,
+                  userType === "Doctor" && styles.roleSelected,
+                ]}
+                onPress={() => {
+                  setUserType("Doctor");
+                  setOcultar(true);
 
-         {/* Formulario */}
-        <View style={styles.form}>
-          <Text style={styles.formTitle}>Acceso para {userType}</Text>
+                }}
+              >
 
 
-     <TextInput
-            style={styles.input}
-            placeholder="Correo"
-            placeholderTextColor="#94a3b8"
-            keyboardType="email-address"
-            value={correo}
-            onChangeText={setCorreo}
-          />
+                <View style={styles.alinear}>
+                  <FontAwesome6 name="user-doctor" size={24} color="white" />
+                  <Text style={styles.roleText}>Doctores</Text>
+                </View>
 
-         
+                <Text style={styles.roleSub}>Acceso para médicos especialistas</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.roleButton,
+                  userType === "Administradores" && styles.roleSelected,
+                ]}
+                onPress={() => {
+                  setUserType("Administradores");
+                  setOcultar(true);
 
-          <TextInput
-            style={styles.input}
-            placeholder="Contraseña"
-            placeholderTextColor="#94a3b8"
-            secureTextEntry
-            value={clave}
-            onChangeText={setClave}
-          />
+                }}
+              >
+                <View style={styles.alinear}>
+                  <MaterialIcons name="admin-panel-settings" size={24} color="white" />
+                  <Text style={styles.roleText}>Administradores</Text>
+                </View>
 
-          <TouchableOpacity>
-            <Text style={styles.forgot}>¿Olvidaste tu contraseña?</Text>
-          </TouchableOpacity>
+                <Text style={styles.roleSub}>Acceso para administradores del sistema</Text>
+              </TouchableOpacity>
 
-          <TouchableOpacity disabled={esperando} onPress={handleLogin} style={styles.loginBtn}>
-            <Text style={styles.loginText}>Ingresar como {userType}</Text>
-          </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.roleButton,
+                  userType === "Recepcionista" && styles.roleSelected,
+                ]}
+                onPress={() => {
+                  setUserType("Recepcionista");
+                  setOcultar(true);
 
-          {/* Solo mostrar el botón de registro si ocultar es falso */}
-          {!ocultar && (
-            <View style={styles.registerBtn}>
-              <Button
-                onPress={() => navigation.navigate("Registrar")}
-                title="Registrar Paciente"
-                color="#22c55e"
-              />
+                }}
+              >
+                <View style={styles.alinear}>
+                  <Fontisto name="headphone" size={24} color="white" />
+                  <Text style={styles.roleText}>Recepcionistas</Text>
+                </View>
+
+                <Text style={styles.roleSub}>Acceso para personal administrativo</Text>
+              </TouchableOpacity>
+              <TouchableOpacity disabled={esperando} onPress={() => setOcultarRoles(true)} style={styles.loginBtn}>
+                <Text style={styles.loginText}>Ingresar como {userType}</Text>
+              </TouchableOpacity>
             </View>
           )}
+          {ocultarRoles && (
+            <View style={styles.form}>
+              {/* Formulario */}
+              <Text style={styles.formTitle}>Acceso para {userType}</Text>
+
+
+              <TextInput
+                style={styles.input}
+                placeholder="Correo"
+                placeholderTextColor="#94a3b8"
+                keyboardType="email-address"
+                value={correo}
+                onChangeText={setCorreo}
+              />
+
+
+
+              <TextInput
+                style={styles.input}
+                placeholder="Contraseña"
+                placeholderTextColor="#94a3b8"
+                secureTextEntry
+                value={clave}
+                onChangeText={setClave}
+              />
+
+              <TouchableOpacity>
+                <Text style={styles.forgot}>¿Olvidaste tu contraseña?</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity disabled={esperando} onPress={handleLogin} style={styles.loginBtn}>
+                <Text style={styles.loginText}>Iniciar sesion como {userType}</Text>
+              </TouchableOpacity>
+
+              {/* Solo mostrar el botón de registro si ocultar es falso */}
+              {!ocultar && (
+                <View style={styles.registerBtn}>
+                  <Button
+                    onPress={() => navigation.navigate("Registrar")}
+                    title="Registrar Paciente"
+                    color="#22c55e"
+                  />
+                </View>
+              )}
+              <TouchableOpacity disabled={esperando} onPress={() => setOcultarRoles(false)} style={styles.volverBtn}>
+                <Text style={styles.loginText}>Cambiar rol</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+
+
+
         </View>
-       
-       
-      </View>
-    </ScrollView>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
- alinear: {
-      flexDirection: "row",   // Alinea en fila
+  alinear: {
+    flexDirection: "row",   // Alinea en fila
     alignItems: "center",   // Centra verticalmente
     gap: 8,                 // Espacio entre icono y texto (en RN 0.71+)
- },
+  },
   scroll: {
     flexGrow: 1,
     justifyContent: "center",
@@ -276,6 +288,12 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     alignItems: "center",
     marginBottom: 10,
+  }, volverBtn: {
+    backgroundColor: "#8e9095ff",
+    padding: 10,
+    borderRadius: 10,
+    alignItems: "center",
+    marginBottom: 10,
   },
   loginText: {
     color: "white",
@@ -284,6 +302,7 @@ const styles = StyleSheet.create({
   },
   registerBtn: {
     marginTop: 10,
+    marginBottom: 10,
     borderRadius: 10,
     overflow: "hidden",
   },

@@ -1,6 +1,6 @@
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import DashboardScreen from "../../../Screen/Pacientes/dashboardPacientes";
-import CrearCitas from "../../../Screen/Citas/form_citas";
+import form_citas from "../../../Screen/Citas/form_citas";
 import HistorialPaciente from "../../../Screen/Pacientes/historial";
 
 import BuscarDoctoresScreen from "../../../Screen/Doctores/buscarDocotores";
@@ -23,8 +23,8 @@ export default function Pacientes_Stack() {
       />
 
       <Stack.Screen
-        name="crearCitas"      
-        component={CrearCitas}
+        name="formCitas"      
+        component={form_citas}
         options={{ title: "Agendar cita" }}
       />
       <Stack.Screen
