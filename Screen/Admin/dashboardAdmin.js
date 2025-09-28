@@ -23,7 +23,7 @@ export default function DashboardScreen({ navigation }) {
           Alert.alert("No se encontró el token, redirigiendo al login");
           return;
         }
-        const response = await api.get("/me/paciente");
+        const response = await api.get("/me/admin");
         setUsuario(response.data);
       } catch (error) {
         const mensaje =
@@ -37,68 +37,9 @@ export default function DashboardScreen({ navigation }) {
     CargarPerfil();
   }, []);
 
-   const cargarCitas = async () => {
-      if (!usuario?.user?.documento) return;
-      try {
-        const response = await cargarCitasConfirmadasPorPaciente(usuario.user.documento);
-        if (response.message) {
-          setNohayCitas(true);
-          setCitas([]);
-          return;
-        }
-        setCitas(response.citas);
-        setNohayCitas(false);
-        
+  
 
-
-      } catch (error) {
-        const mensaje =
-          error?.response?.data?.message ||
-          error?.message ||
-          "Error interno, intente más tarde";
-        Alert.alert("Error", mensaje);
-      }
-
-    };
-
-
-  useEffect(() => {
-   
-    cargarCitas();
-
-    const citasEsteMes = async () => {
-      if (!usuario?.user?.id) return;
-      const id = usuario?.user?.id;
-      try {
-        const response = await api.get("citasEsteMesPorPaciente/" + id);
-        setCitasEsteMes(response.data.citas);
-      } catch (error) {
-        const mensaje =
-          error?.response?.data?.message ||
-          error?.message ||
-          "Error interno, intente más tarde";
-        Alert.alert("Error", mensaje);
-      }
-    }
-    citasEsteMes();
-
-    const totalCitas = async () => {
-      if (!usuario?.user?.id) return;
-      const id = usuario?.user?.id;
-      try {
-        const response = await api.get("totalCitasPorPaciente/" + id);
-        setTotalCita(response.data.citas);
-      } catch (error) {
-        const mensaje =
-          error?.response?.data?.message ||
-          error?.message ||
-          "Error interno, intente más tarde";
-        Alert.alert("Error", mensaje);
-      }
-    }
-    totalCitas();
-  }, [usuario]);
-
+  
   const alertaCancelarCita = (id) => {
 
     Alert.alert(

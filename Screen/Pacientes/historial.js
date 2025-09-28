@@ -19,7 +19,7 @@ export default function HistorialMedico() {
           Alert.alert("No se encontró el token, redirigiendo al login");
           return;
         }
-        const response = await api.get("/me");
+        const response = await api.get("/me/Paciente");
         setUsuario(response.data);
       } catch (error) {
         console.error("Error al cargar el perfil:", error);

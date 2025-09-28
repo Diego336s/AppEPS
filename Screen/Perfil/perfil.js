@@ -31,7 +31,7 @@ export default function PerfilScreen({ navigation }) {
           Alert.alert("No se encontro el token del usuario, redirigiendo al login");
           return;
         }
-        const response = await api.get("/me");
+        const response = await api.get("/me/"+rol);
         console.log(response.data);
         setUsuario(response.data);
       } catch (error) {

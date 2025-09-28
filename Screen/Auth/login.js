@@ -13,7 +13,7 @@ import {
 } from "react-native";
 
 import { Fontisto, MaterialIcons, FontAwesome6 } from "@expo/vector-icons";
-import { loginPaciente } from "../../Src/Services/AuthService";
+import { loginAdmin, loginPaciente, loginRecepcionista } from "../../Src/Services/AuthService";
 import FlashMessage, { showMessage } from "react-native-flash-message";
 
 export default function Login({ navigation }) {
@@ -46,7 +46,28 @@ export default function Login({ navigation }) {
         } else {
           Alert.alert("Error de Login", response?.message || "ocurrio un error al inicar sesion",);
         }
-
+      } else if (userType === "Recepcionista") {
+        const response = await loginRecepcionista(correo, clave);
+        if (response.success) {
+          showMessage({
+            message: "Bienvenido 😊",
+            description: "Inicio de sesion exitoso ✅",
+            type: "success"
+          });
+        } else {
+          Alert.alert("Error de Login", response?.message || "ocurrio un error al inicar sesion",);
+        }
+      }else if (userType === "Administradores") {
+        const response = await loginAdmin(correo, clave);
+        if (response.success) {
+          showMessage({
+            message: "Bienvenido 😊",
+            description: "Inicio de sesion exitoso ✅",
+            type: "success"
+          });
+        } else {
+          Alert.alert("Error de Login", response?.message || "ocurrio un error al inicar sesion",);
+        }
       }
 
     } catch (error) {

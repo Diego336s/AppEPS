@@ -1,31 +1,61 @@
-import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity, Switch, ScrollView } from "react-native";
+import React, { useEffect } from "react";
+import { View, Text, StyleSheet, TouchableOpacity, Switch, ScrollView, Alert } from "react-native";
 import { useState } from "react";
-import { logoutPaciente } from "../../Src/Services/AuthService";
-export default function ConfiguracionesScreen({navigation}) {
-  
+import { logoutPaciente, logoutAdmin, logoutRecepcion, logoutDoctor } from "../../Src/Services/AuthService";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+export default function ConfiguracionesScreen({ navigation }) {
+  const [rol, setRol] = useState("");
+  useEffect(() => {
+    const cargarRol = async () => {
+      const rolGuardado = await AsyncStorage.getItem("rolUser");
+      setRol(rolGuardado);
+    }
+    cargarRol();
+  }, []);
+
+  const cerrarSesion = async () => {
+    switch (rol) {
+      case "Paciente":
+        logoutPaciente();
+        break;
+      case "Doctor":
+        logoutDoctor();
+        break;
+      case "Admin":
+        logoutAdmin();
+        break;
+      case "Recepcionista":
+        logoutRecepcion();
+        break;
+
+      default:
+        Alert.alert("Error rol", "No pudimos validar tu rol, Inicia Sesion otra vez");
+        await AsyncStorage.multiRemove(["userToken", "rolUser"]);
+        break;
+    }
+  }
   return (
     <ScrollView style={styles.container}>
-     
+
 
       {/* Sección: Cuenta */}
       <View style={styles.card}>
         <Text style={styles.sectionTitle}>Cuenta</Text>
-        <TouchableOpacity onPress={()=>navigation.navigate("Cambiar_clave")} style={styles.option}>
+        <TouchableOpacity onPress={() => navigation.navigate("Cambiar_clave")} style={styles.option}>
           <Text style={styles.optionText}>🔑 Cambiar Contraseña</Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={()=>navigation.navigate("Cambiar_correo")} style={styles.option}>
+        <TouchableOpacity onPress={() => navigation.navigate("Cambiar_correo")} style={styles.option}>
           <Text style={styles.optionText}>📧 Cambiar Correo</Text>
         </TouchableOpacity>
       </View>
 
-     
+
 
       {/* Sección: Otros */}
       <View style={styles.card}>
         <Text style={styles.sectionTitle}>Otros</Text>
-       
-        <TouchableOpacity onPress={logoutPaciente} style={styles.option}>
+
+        <TouchableOpacity onPress={()=>{cerrarSesion()}} style={styles.option}>
           <Text style={[styles.optionText, { color: "red" }]}>🚪 Cerrar Sesión</Text>
         </TouchableOpacity>
       </View>

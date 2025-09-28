@@ -7,7 +7,7 @@ export const listarMedicosConEspecialidad = async () => {
     } catch (error) {
         return {
             success: false,
-            message: error.response?.data || "Error al cargar los medicos",
+            message: error.response?.data?.message || "Error al cargar los medicos",
         };
     }
 };

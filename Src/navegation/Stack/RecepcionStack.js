@@ -1,9 +1,5 @@
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import DashboardScreen from "../../../Screen/Pacientes/dashboardPacientes";
-import Form_citas from "../../../Screen/Citas/form_citas";
-
-import Form_reprogramar from "../../../Screen/Citas/form_reprogramar_cita";
-
+import DashboardScreen from "../../../Screen/Recepcion/dashboardRecepcion";
 import BuscarDoctoresScreen from "../../../Screen/Doctores/buscarDocotores";
 
 const Stack = createNativeStackNavigator();
@@ -22,18 +18,7 @@ export default function Pacientes_Stack() {
         component={DashboardScreen}
         options={{ title: "Dashboard" }}
       />
-
-      <Stack.Screen
-        name="formCitas"
-        component={Form_citas}
-        options={{ title: "Agendar cita" }}
-      />
-
-      <Stack.Screen
-        name="formReprogramar"
-        component={Form_reprogramar}
-        options={{ title: "Reprogramar Cita" }}
-      />     
+    
       <Stack.Screen
         name="buscarDoctores"
         component={BuscarDoctoresScreen}
@@ -42,4 +27,3 @@ export default function Pacientes_Stack() {
     </Stack.Navigator>
   );
 }
-

@@ -23,7 +23,7 @@ export default function DashboardScreen({ navigation }) {
           Alert.alert("No se encontró el token, redirigiendo al login");
           return;
         }
-        const response = await api.get("/me/paciente");
+        const response = await api.get("/me");
         setUsuario(response.data);
       } catch (error) {
         const mensaje =

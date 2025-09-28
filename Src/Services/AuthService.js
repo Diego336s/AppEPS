@@ -47,9 +47,141 @@ export const loginPaciente = async (correo, clave) => {
     }
 };
 
+export const loginRecepcionista = async (correo, clave) => {
+
+    try {
+        const response = await api.post("/loginRecepcionista", { correo, clave });
+        const token = response.data.token; //Token es la palabra que alla puesto como llave en la respuesta del servidor
+        console.log("Respuesta del servidor:", response.data);
+        console.log("Token recibido:", token);
+        const rol = "Recepcionista";
+        if (token) {
+            await AsyncStorage.setItem("userToken", token);
+            await AsyncStorage.setItem("rolUser", rol);
+        } else {
+            console.error("No se recibio el token en la respuesta");
+        }
+
+        if (!response.data.success) {
+            return {
+                success: false,
+                message: response.data.message
+            }
+        }
+        return { success: true, token };
+    } catch (error) {
+        if (error.response) {
+            console.log("Error al iniciar sesión:", error.response.data);
+            return {
+                success: false,
+                message: error.response.data.message || "Error en las credenciales",
+            };
+        } else {
+            console.log("Error al iniciar sesión:", error.message);
+            return {
+                success: false,
+                message: "Error de conexión con el servidor",
+            };
+        }
+    }
+};
+
+
+
+export const loginAdmin = async (correo, clave) => {
+
+    try {
+        const response = await api.post("/loginAdmin", { correo, clave });
+        const token = response.data.token; //Token es la palabra que alla puesto como llave en la respuesta del servidor
+        console.log("Respuesta del servidor:", response.data);
+        console.log("Token recibido:", token);
+        const rol = "Admin";
+        if (token) {
+            await AsyncStorage.setItem("userToken", token);
+            await AsyncStorage.setItem("rolUser", rol);
+        } else {
+            console.error("No se recibio el token en la respuesta");
+        }
+
+        if (!response.data.success) {
+            return {
+                success: false,
+                message: response.data.message
+            }
+        }
+        return { success: true, token };
+    } catch (error) {
+        if (error.response) {
+            console.log("Error al iniciar sesión:", error.response.data);
+            return {
+                success: false,
+                message: error.response.data.message || "Error en las credenciales",
+            };
+        } else {
+            console.log("Error al iniciar sesión:", error.message);
+            return {
+                success: false,
+                message: "Error de conexión con el servidor",
+            };
+        }
+    }
+};
+
+export const logoutAdmin = async () => {
+    try {
+        const response = await api.post("/logoutAdmin");
+        await AsyncStorage.multiRemove(["userToken", "rolUser"]);
+        if (!response.data.success) {
+            console.error("Error del servidor:", response.data.message);
+        }
+        return { success: true, message: response.data.message };
+    } catch (error) {
+
+        return {
+            success: false,
+            message: error.response ? error.response.data : "Error de conexion",
+        };
+    }
+};
+
+export const logoutRecepcion = async () => {
+    try {
+        const response = await api.post("/logoutRecepcionista");
+        await AsyncStorage.multiRemove(["userToken", "rolUser"]);
+        if (!response.data.success) {
+            console.error("Error del servidor:", response.data.message);
+        }
+        return { success: true, message: response.data.message };
+    } catch (error) {
+
+        return {
+            success: false,
+            message: error.response ? error.response.data : "Error de conexion",
+        };
+    }
+};
+
+
 export const logoutPaciente = async () => {
     try {
         const response = await api.post("/logoutPaciente");
+        await AsyncStorage.multiRemove(["userToken", "rolUser"]);
+        if (!response.data.success) {
+            console.error("Error del servidor:", response.data.message);
+        }
+        return { success: true, message: response.data.message };
+    } catch (error) {
+
+        return {
+            success: false,
+            message: error.response ? error.response.data : "Error de conexion",
+        };
+    }
+};
+
+export const logoutDoctor = async () => {
+    try {
+        const response = await api.post("/logoutMedico");
         await AsyncStorage.multiRemove(["userToken", "rolUser"]);
         if (!response.data.success) {
             console.error("Error del servidor:", response.data.message);
@@ -80,7 +212,7 @@ export const cambiarClave = async (clave, id) => {
         return {
             success: false,
             message: error.message
-        }
+        }        
     }
 }
 
