@@ -380,16 +380,16 @@ export const olvideMiClave = async (rol, clave, correo) => {
         let response;
         switch (rol) {
             case "Paciente":
-                response = await api.post("/olvide/clave/Paciente", { clave, correo });
+                response = await api.put("/olvide/clave/Paciente", { clave, correo });
                 break;
             case "Doctor":
-                response = await api.post("/olvide/clave/Doctor", { clave, correo });
+                response = await api.put("/olvide/clave/Doctor", { clave, correo });
                 break;
             case "Administradores":
-                response = await api.post("/olvide/clave/Admin", { clave, correo });
+                response = await api.put("/olvide/clave/Admin", { clave, correo });
                 break;
             case "Recepcionista":
-                response = await api.post("/olvide/clave/Recepcionista", { clave, correo });
+                response = await api.put("/olvide/clave/Recepcionista", { clave, correo });
                 break;
             default:
                 Alert.alert("Error rol", "No pudimos validar tu rol, Inicia Sesion otra vez");

@@ -212,7 +212,7 @@ export default function Login({ navigation }) {
                 onChangeText={setClave}
               />
 
-              <TouchableOpacity onPress={navigation.navigate("OlvideClave", {rol:userType})}>
+              <TouchableOpacity onPress={()=>navigation.navigate("OlvideClave", {rol:userType})}>
                 <Text style={styles.forgot}>¿Olvidaste tu contraseña?</Text>
               </TouchableOpacity>
 

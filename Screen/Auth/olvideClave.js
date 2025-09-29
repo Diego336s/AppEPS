@@ -5,7 +5,7 @@ import { cambiarClave, olvideMiClave } from "../../Src/Services/AuthService";
 
 import { useRoute } from "@react-navigation/native";
 
-export default function Cambiar_clave() {
+export default function Cambiar_clave({ navigation }) {
     const route = useRoute();
     const rol = route.params.rol;
     const [clave, setClave] = useState("");
@@ -30,18 +30,18 @@ export default function Cambiar_clave() {
             Alert.alert("Error minimo no alcanzado 😰", "La contraseña debe tener minimo 6 caracteres")
 
             return;
-        }    
+        }
 
 
         try {
 
-            const response = await olvideMiClave(rol,clave, correo);
+            const response = await olvideMiClave(rol, clave, correo);
             if (!response.success) {
                 Alert.alert("Error cambio de clave ☹️", response.message)
                 return;
             }
             Alert.alert("Cambio de clave exitoso 🫡", response.message)
-
+            navigation.navigate("Login");
         } catch (error) {
             Alert.alert("Error al cambiar la contraseña", error.message)
         }
@@ -62,6 +62,7 @@ export default function Cambiar_clave() {
                             style={styles.input}
                             placeholder="Correo"
                             placeholderTextColor="#94a3b8"
+                            keyboardType="email-address"
                             value={correo}
                             onChangeText={setCorreo}
                         />
