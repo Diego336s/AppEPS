@@ -17,6 +17,10 @@ const RutasPublicas = [
     "/loginMedico",
     "/loginAdmin",
     "/crearPaciente",
+    '/olvide/clave/Recepcionista',
+    '/olvide/clave/Paciente',
+    '/olvide/clave/Admin',
+    '/olvide/clave/Doctor'
     
 ]; //Rutas de api que no requiren autenticacion
 

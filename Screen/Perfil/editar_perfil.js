@@ -90,22 +90,15 @@ export default function Editar_perfil({ navigation }) {
 
   const enviarForm = async () => {
     if (!nombre || !apellido || !documento || !telefono) {
-
-      showMessage({
-        message: "Error ☹️",
-        description: "Debes completar todos los campos 😰",
-        type: "danger"
-      });
+Alert.alert("Error ☹️", "Debes completar todos los campos 😰")
+     
       return;
     }
 
 
     if (telefono.length !== 10) {
-      showMessage({
-        message: "Error 📞",
-        description: "El numero de telefono esta mal 😰",
-        type: "danger"
-      });
+      Alert.alert("Error 📞", "El numero de telefono esta mal 😰")
+      
 
       return;
     }

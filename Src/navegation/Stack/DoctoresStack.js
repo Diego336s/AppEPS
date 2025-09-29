@@ -1,8 +1,8 @@
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import DashboardScreen from "../../../Screen/Doctores/dashboardDoctores";
 
-import HistorialCitas from "../../../Screen/Recepcion/historial";
-
+import HistorialCitas from "../../../Screen/Doctores/historial";
+import BuscarPaciente from "../../../Screen/Pacientes/buscarPaciente";
 const Stack = createNativeStackNavigator();
 
 export default function Pacientes_Stack() {
@@ -25,6 +25,12 @@ export default function Pacientes_Stack() {
         name="HistorialCitas"
         component={HistorialCitas}
         options={{ title: "Historial Citas" }}
+      />
+
+         <Stack.Screen
+        name="BuscarPaciente"
+        component={BuscarPaciente}
+        options={{ title: "Pacientes atendidos" }}
       />
     </Stack.Navigator>
   );

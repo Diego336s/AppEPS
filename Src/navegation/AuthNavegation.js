@@ -1,6 +1,7 @@
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import Login from "../../Screen/Auth/login";
 import Registrar from "../../Screen/Auth/registrar";
+import OlvideClave from"../../Screen/Auth/olvideClave";
 
 
 const Stack = createNativeStackNavigator();
@@ -23,6 +24,12 @@ export default function AuthNavegation(){
             component={Registrar}
             options={{title: "Registro"}}
             />
+
+             <Stack.Screen
+            name="OlvideClave"
+            component={OlvideClave}
+            options={{title: "Olvide mi clave"}}
+            />  
         </Stack.Navigator>
     )
 }

@@ -5,6 +5,7 @@ import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 import { Alert } from "react-native";
 
+
 dayjs.extend(customParseFormat);
 
 
@@ -96,6 +97,45 @@ export const loginAdmin = async (correo, clave) => {
         console.log("Respuesta del servidor:", response.data);
         console.log("Token recibido:", token);
         const rol = "Admin";
+        if (token) {
+            await AsyncStorage.setItem("userToken", token);
+            await AsyncStorage.setItem("rolUser", rol);
+        } else {
+            console.error("No se recibio el token en la respuesta");
+        }
+
+        if (!response.data.success) {
+            return {
+                success: false,
+                message: response.data.message
+            }
+        }
+        return { success: true, token };
+    } catch (error) {
+        if (error.response) {
+            console.log("Error al iniciar sesión:", error.response.data);
+            return {
+                success: false,
+                message: error.response.data.message || "Error en las credenciales",
+            };
+        } else {
+            console.log("Error al iniciar sesión:", error.message);
+            return {
+                success: false,
+                message: "Error de conexión con el servidor",
+            };
+        }
+    }
+};
+
+export const loginDoctor = async (correo, clave) => {
+
+    try {
+        const response = await api.post("/loginMedico", { correo, clave });
+        const token = response.data.token; //Token es la palabra que alla puesto como llave en la respuesta del servidor
+        console.log("Respuesta del servidor:", response.data);
+        console.log("Token recibido:", token);
+        const rol = "Doctor";
         if (token) {
             await AsyncStorage.setItem("userToken", token);
             await AsyncStorage.setItem("rolUser", rol);
@@ -247,10 +287,10 @@ export const cambiarCorreo = async (correo, id, rol) => {
                 response = await api.post("cambiar/correo/medico/" + id, { correo });
                 break;
             case "Admin":
-                 response = await api.post("cambiar/correo/Admin/" + id, { correo });
+                response = await api.post("cambiar/correo/Admin/" + id, { correo });
                 break;
             case "Recepcionista":
-                 response = await api.post("cambiar/correo/recepcionista/" + id, { correo });
+                response = await api.post("cambiar/correo/recepcionista/" + id, { correo });
                 break;
 
             default:
@@ -258,7 +298,7 @@ export const cambiarCorreo = async (correo, id, rol) => {
                 await AsyncStorage.multiRemove(["userToken", "rolUser"]);
                 break;
         }
-        
+
         if (!response.data.success) {
             return { success: false, message: response.data.message ? response.data.message : "No se pudo cambiar el correo, reintentar nuevamente" }
         }
@@ -269,7 +309,7 @@ export const cambiarCorreo = async (correo, id, rol) => {
 
     } catch (error) {
         console.error("Error", error.message)
-       return {
+        return {
             success: false,
             message: error?.response?.data?.message || "Error al reprogramar la cita",
             status: error?.response?.status || 500
@@ -331,3 +371,46 @@ export const registrarPaciente = async (
         };
     }
 };
+
+
+
+export const olvideMiClave = async (rol, clave, correo) => {
+    
+    try {
+        let response;
+        switch (rol) {
+            case "Paciente":
+                response = await api.post("/olvide/clave/Paciente", { clave, correo });
+                break;
+            case "Doctor":
+                response = await api.post("/olvide/clave/Doctor", { clave, correo });
+                break;
+            case "Administradores":
+                response = await api.post("/olvide/clave/Admin", { clave, correo });
+                break;
+            case "Recepcionista":
+                response = await api.post("/olvide/clave/Recepcionista", { clave, correo });
+                break;
+            default:
+                Alert.alert("Error rol", "No pudimos validar tu rol, Inicia Sesion otra vez");
+                await AsyncStorage.multiRemove(["userToken", "rolUser"]);
+                break;
+        }
+
+        if (!response.data.success) {
+            return { success: false, message: "No se pudo cambiar la clave, reintentar nuevamente" }
+        }
+
+
+        return { success: true, message: "Cambio de clave exitoso, inicia sesion" }
+
+
+    } catch (error) {
+        console.error("Error", error.message)
+        return {
+            success: false,
+            message: error?.response?.data?.message || "Error al reprogramar la cita",
+            status: error?.response?.status || 500
+        };
+    }
+}

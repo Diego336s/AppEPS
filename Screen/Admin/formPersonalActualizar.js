@@ -87,7 +87,7 @@ export default function FormPersonal({ navigation }) {
         const cargarEspecialidades = async () => {
             try {
                 const response = await api.get("/listarEspecialidades");
-                setCargarEspecialidad(response.data);
+                setCargarEspecialidad(response.data.especialidades);
             } catch (error) {
                 console.error("Error al cargar las especialidades:", error);
             }

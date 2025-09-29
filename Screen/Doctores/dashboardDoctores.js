@@ -1,136 +1,429 @@
-import React from "react";
-import { View, Text, TouchableOpacity, FlatList, StyleSheet } from "react-native";
+import React, { useEffect, useState } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import api from "../../Src/Services/Conexion";
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert } from "react-native";
+import { Ionicons, MaterialIcons, FontAwesome5 } from "@expo/vector-icons";
 
-const agendaMock = [
-  {
-    id: "1",
-    paciente: "Dr. María González",
-    especialidad: "Medicina General",
-    fecha: "2024-01-15",
-    hora: "10:30 AM",
-    lugar: "Consultorio 201",
-    estado: "confirmada",
-  },
-  {
-    id: "2",
-    paciente: "Dr. Carlos Ruiz",
-    especialidad: "Cardiología",
-    fecha: "2024-01-15",
-    hora: "11:00 AM",
-    lugar: "Consultorio 105",
-    estado: "pendiente",
-  },
-];
+import FlashMessage, { showMessage } from "react-native-flash-message";
+import { citasPendientesDoctor } from "../../Src/Services/MedicosService";
 
-export default function DashboardDoctor() {
+
+export default function DashboardScreen({ navigation }) {
+  const [usuario, setUsuario] = useState(null)
+  const [citas, setCitas] = useState(null);
+  const [noHaycitas, setNohayCitas] = useState(true);
+  const [citasFinalizadasEsteMes, setCitasFinalizadasEsteMes] = useState("");
+  const [totalCitaPendiente, setTotalCitaPendiente] = useState("");
+
+  useEffect(() => {
+    const CargarPerfil = async () => {
+      try {
+        const token = await AsyncStorage.getItem("userToken");
+        if (!token) {
+          await AsyncStorage.multiRemove(["userToken", "rolUser"]);
+          Alert.alert("No se encontró el token, redirigiendo al login");
+          return;
+        }
+        const response = await api.get("/me/Doctor");
+        setUsuario(response.data);
+      } catch (error) {
+        const mensaje =
+          error?.response?.data?.message ||
+          error?.message ||
+          "Error interno, intente más tarde";
+        Alert.alert("Error", mensaje);
+      }
+    };
+
+    CargarPerfil();
+  }, []);
+
+  const cargarCitas = async () => {
+    if (!usuario?.user?.id) return;
+    try {
+      const response = await citasPendientesDoctor(usuario?.user?.id);
+      if (response.message) {
+        setNohayCitas(true);
+        setCitas([]);
+        return;
+      }
+      console.log(response.citas);
+      setCitas(response.citas);
+      setNohayCitas(false);
+
+
+
+    } catch (error) {
+      const mensaje =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Error interno, intente más tarde";
+      Alert.alert("Error", mensaje);
+    }
+
+  };
+
+  const citasFinalizasEsteMes = async () => {
+    if (!usuario?.user?.id) return;
+    try {
+      const response = await api.get("total/citas/mes/doctor/" + usuario?.user?.id);
+      setCitasFinalizadasEsteMes(response.data.citas);
+    } catch (error) {
+      console.log(error?.response?.data?.message ||
+        error?.message ||
+        "Error interno, intente más tarde")
+      const mensaje =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Error interno, intente más tarde";
+      Alert.alert("Error", mensaje);
+    }
+  }
+
+  const totalCitasConfirmadas = async () => {
+     if (!usuario?.user?.id) return;
+    try {
+      const response = await api.get("total/citas/confirmadas/" + usuario?.user?.id);
+      setTotalCitaPendiente(response.data.citas);
+    } catch (error) {
+      console.log(error?.response?.data?.message ||
+        error?.message ||
+        "Error interno, intente más tarde")
+      const mensaje =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Error interno, intente más tarde";
+      Alert.alert("Error", mensaje);
+    }
+  }
+
+  useEffect(() => {
+
+    cargarCitas();
+    citasFinalizasEsteMes();
+    totalCitasConfirmadas();
+
+  }, [usuario]);
+
+  const alertaCancelarCita = (id) => {
+
+    Alert.alert(
+      "Cancelar Cita",
+      "¿Seguro que quieres cancelar la cita?",
+      [
+        {
+          text: "No", // Texto del botón
+          onPress: () => console.log("Cancelado ❌"),
+          style: "cancel", // estilo especial para iOS
+        },
+        {
+          text: "Sí",
+          onPress: () => {
+            console.log("Cita cancelada ✅");
+            // aquí llamas a la función que cancela la cita
+            cancelarCita(id);
+          },
+        },
+      ],
+      { cancelable: true } // permite cerrar tocando fuera
+    );
+
+
+  }
+
+
+  const cancelarCita = async (id) => {
+    if (id === "") {
+      Alert.alert("No se a podido obtener el ID de la cita, Intenta nuevamente")
+    }
+    const estado = "Cancelada";
+    try {
+      const response = await api.post("cambiarEstadoCita/" + id, { estado });
+      if (!response.data.success) {
+        Alert.alert("Error ❌", response?.data.message || "Error al intentar cancelar la cita")
+      }
+
+      showMessage({
+        message: "Cita cancelada 🫡",
+        description: "Su cita ha sido cancelada exitosamente",
+        type: "success"
+      });
+      cargarCitas();
+ citasFinalizasEsteMes();
+    totalCitasConfirmadas();
+    } catch (error) {
+      const mensaje =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Error interno, intente más tarde";
+      Alert.alert("Error", mensaje);
+    }
+
+  }
+
+  const alertaFinalizarCita = (id) => {
+
+    Alert.alert(
+      "Finalizar Cita",
+      "¿Seguro que quieres finalizar la cita?",
+      [
+        {
+          text: "No", // Texto del botón
+          onPress: () => console.log("Cancelado ❌"),
+          style: "cancel", // estilo especial para iOS
+        },
+        {
+          text: "Sí",
+          onPress: () => {
+            console.log("Cita cancelada ✅");
+            // aquí llamas a la función que cancela la cita
+            finalizarCita(id);
+          },
+        },
+      ],
+      { cancelable: true } // permite cerrar tocando fuera
+    );
+
+
+  }
+
+
+  const finalizarCita = async (id) => {
+    if (id === "") {
+      Alert.alert("No se a podido obtener el ID de la cita, Intenta nuevamente")
+    }
+    const estado = "Finalizada";
+    try {
+      const response = await api.post("cambiarEstadoCita/" + id, { estado });
+      if (!response.data.success) {
+        Alert.alert("Error ❌", response?.data.message || "Error al intentar confirmar la cita")
+      }
+
+      showMessage({
+        message: "Cita Finalizada 🫡",
+        description: "Su cita ha sido finalizada exitosamente",
+        type: "success"
+      });
+      cargarCitas();
+
+ citasFinalizasEsteMes();
+    totalCitasConfirmadas();
+
+    } catch (error) {
+      const mensaje =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Error interno, intente más tarde";
+      Alert.alert("Error", mensaje);
+    }
+
+  }
+
+
   return (
-    <View style={styles.container}>
-      {/* Bienvenida */}
+    <ScrollView style={styles.container}>
+      <FlashMessage position="top" />
+      {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.titulo}>Bienvenido, Dr. García</Text>
-        <Text style={styles.subtitulo}>Reg: MED-2024-001</Text>
+        <Ionicons name="person-circle" size={50} color="white" />
+        <View style={{ marginLeft: 10 }}>
+          <Text style={styles.welcome}>Bienvenido, {usuario?.user.nombre}</Text>
+          <Text style={styles.sub}>CC: {usuario?.user.documento}</Text>
+        </View>
       </View>
 
-      {/* Estadísticas rápidas */}
-      <View style={styles.statsRow}>
-        <View style={styles.statCard}>
-          <Text style={styles.statNumber}>12</Text>
-          <Text style={styles.statLabel}>Pacientes Hoy</Text>
+      {/* Resumen rápido */}
+      <View style={styles.summaryRow}>
+        {/* Citas pendientes */}
+        <View style={styles.summaryCard}>
+          <MaterialIcons name="monitor-heart" size={24} color="white" />
+          <Text style={styles.summaryNumber}>{totalCitaPendiente}</Text>
+          <Text style={styles.summaryText}>Citas pendientes</Text>
         </View>
-        <View style={styles.statCard}>
-          <Text style={styles.statNumber}>145</Text>
-          <Text style={styles.statLabel}>Consultas Mes</Text>
+
+        {/* Citas finalizadas por mes */}
+        <View style={styles.summaryCard}>
+          <Ionicons name="calendar" size={24} color="white" />
+          <Text style={styles.summaryNumber}>{citasFinalizadasEsteMes}</Text>
+          <Text style={styles.summaryText}>Citas finalizadas del mes</Text>
         </View>
-        <View style={styles.statCard}>
-          <Text style={styles.statNumber}>3</Text>
-          <Text style={styles.statLabel}>Pendientes</Text>
-        </View>
+
+
       </View>
 
       {/* Acciones rápidas */}
-      <Text style={styles.seccion}>Acciones Rápidas</Text>
-      <View style={styles.quickActions}>
-        <TouchableOpacity style={[styles.actionButton, { backgroundColor: "#2563eb" }]}>
-          <Text style={styles.actionText}>Agenda Médica</Text>
+      <Text style={styles.sectionTitle}>Acciones Rápidas</Text>
+      <View style={styles.actionsRow}>
+        <TouchableOpacity onPress={() => { navigation.navigate("HistorialCitas") }} style={[styles.actionCard, { backgroundColor: "#a855f7" }]}>
+          <FontAwesome5 name="heartbeat" size={20} color="white" />
+          <Text style={styles.actionText}>Historial citas</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.actionButton, { backgroundColor: "#22c55e" }]}>
-          <Text style={styles.actionText}>Mis Pacientes</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={[styles.actionButton, { backgroundColor: "#3b82f6" }]}>
-          <Text style={styles.actionText}>Historial Clínico</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={[styles.actionButton, { backgroundColor: "#8b5cf6" }]}>
-          <Text style={styles.actionText}>Consultas</Text>
+
+        <TouchableOpacity onPress={() => { navigation.navigate("BuscarPaciente") }} style={[styles.actionCard, { backgroundColor: "#22c55e" }]}>
+          <Ionicons name="search" size={22} color="white" />
+          <Text style={styles.actionText}>Buscar Paciente</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Agenda del día */}
-      <Text style={styles.seccion}>Agenda del Día</Text>
-      <FlatList
-        data={agendaMock}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <View style={styles.card}>
-            <Text style={styles.paciente}>{item.paciente}</Text>
-            <Text style={styles.info}>{item.especialidad}</Text>
-            <Text style={styles.info}>📅 {item.fecha} ⏰ {item.hora}</Text>
-            <Text style={styles.info}>📍 {item.lugar}</Text>
-            <Text style={[styles.estado, { color: item.estado === "confirmada" ? "green" : "orange" }]}>
-              {item.estado}
-            </Text>
 
-            <View style={styles.botones}>
-              <TouchableOpacity style={styles.botonPrimario}>
-                <Text style={styles.botonTexto}>Reprogramar</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.botonSecundario}>
-                <Text style={styles.botonTexto}>Cancelar</Text>
-              </TouchableOpacity>
-            </View>
+
+      {/* Próximas citas */}<Text style={styles.sectionTitle}>Próximas Citas</Text>
+      {noHaycitas && (
+        <Text style={{ color: "white" }}>
+          No hay citas disponibles
+        </Text>
+      )}
+      {citas && citas.map((itemsCita, index) => (
+        <View key={index} style={styles.appointmentCard}>
+          <Text style={styles.doctor}>
+            Doc. {itemsCita?.nombre_medico} {itemsCita?.apellido_medico}
+          </Text>
+
+          <Text style={styles.date}>
+            📅 {itemsCita?.fecha} 🕒 {itemsCita?.hora_inicio}
+          </Text>
+          <Text style={styles.specialty}>
+            😖{itemsCita?.nombre_paciente}  {itemsCita?.apellido_paciente}
+          </Text>
+          <Text style={styles.location}>📝 {itemsCita?.descripcion}</Text>
+
+          <View style={styles.buttonsRow}>
+            <TouchableOpacity
+              onPress={() => alertaFinalizarCita(itemsCita?.id)}
+              style={styles.rescheduleBtn}
+            >
+              <Text style={styles.btnText}>Finalizar</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => alertaCancelarCita(itemsCita?.id)}
+              style={styles.cancelBtn}
+            >
+              <Text style={styles.btnText}>Cancelar</Text>
+            </TouchableOpacity>
           </View>
-        )}
-      />
-    </View>
+        </View>
+      ))}
+
+
+
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#101828", padding: 16 },
-  header: { marginBottom: 15 },
-  titulo: { fontSize: 20, fontWeight: "bold", color: "#fff" },
-  subtitulo: { fontSize: 14, color: "#aaa" },
-  statsRow: { flexDirection: "row", justifyContent: "space-between", marginBottom: 15 },
-  statCard: {
+  container: {
     flex: 1,
-    backgroundColor: "#1f2937",
+    backgroundColor: "#0f172a",
+    padding: 15,
+  },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  welcome: {
+    color: "white",
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+  sub: {
+    color: "#94a3b8",
+    fontSize: 14,
+  },
+  summaryRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  summaryCard: {
+    backgroundColor: "#1e293b",
+    flex: 1,
+    padding: 15,
     borderRadius: 10,
-    padding: 12,
+    alignItems: "center",
     marginHorizontal: 5,
-    alignItems: "center",
   },
-  statNumber: { fontSize: 18, fontWeight: "bold", color: "#fff" },
-  statLabel: { fontSize: 12, color: "#aaa" },
-  seccion: { fontSize: 16, fontWeight: "bold", color: "#fff", marginVertical: 10 },
-  quickActions: { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between" },
-  actionButton: {
-    flex: 0.48,
+  summaryNumber: {
+    color: "white",
+    fontSize: 18,
+    fontWeight: "bold",
+    marginTop: 5,
+  },
+  summaryText: {
+    color: "#94a3b8",
+    fontSize: 12,
+  },
+  sectionTitle: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "bold",
+    marginVertical: 15,
+  },
+  actionsRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 10,
+  },
+  actionCard: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
     padding: 15,
     borderRadius: 10,
-    marginVertical: 5,
+    marginHorizontal: 5,
+  },
+  actionText: {
+    color: "white",
+    marginLeft: 10,
+    fontWeight: "bold",
+  },
+  appointmentCard: {
+    backgroundColor: "#1e293b",
+    padding: 20,
+    borderRadius: 10,
+    marginBottom: 20,
+  },
+  doctor: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  specialty: {
+    color: "#94a3b8",
+    fontSize: 14,
+    marginBottom: 5,
+  },
+  date: {
+    color: "white",
+    fontSize: 14,
+    marginBottom: 5,
+  },
+  location: {
+    color: "white",
+    fontSize: 14,
+    marginBottom: 15,
+  },
+  buttonsRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  rescheduleBtn: {
+    flex: 1,
+    backgroundColor: "#3b82f6",
+    padding: 12,
+    borderRadius: 8,
     alignItems: "center",
+    marginRight: 5,
   },
-  actionText: { color: "#fff", fontWeight: "600" },
-  card: {
-    backgroundColor: "#1f2937",
-    borderRadius: 12,
-    padding: 15,
-    marginBottom: 12,
+  cancelBtn: {
+    flex: 1,
+    backgroundColor: "#ef4444",
+    padding: 12,
+    borderRadius: 8,
+    alignItems: "center",
+    marginLeft: 5,
   },
-  paciente: { fontSize: 16, fontWeight: "bold", color: "#fff" },
-  info: { fontSize: 12, color: "#ccc" },
-  estado: { fontSize: 12, fontWeight: "bold", marginTop: 5 },
-  botones: { flexDirection: "row", marginTop: 10, justifyContent: "space-between" },
-  botonPrimario: { backgroundColor: "#2563eb", padding: 10, borderRadius: 8, flex: 1, marginRight: 5, alignItems: "center" },
-  botonSecundario: { backgroundColor: "#dc2626", padding: 10, borderRadius: 8, flex: 1, marginLeft: 5, alignItems: "center" },
-  botonTexto: { color: "#fff", fontWeight: "600" },
+  btnText: {
+    color: "white",
+    fontWeight: "bold",
+  },
 });

@@ -1,57 +1,20 @@
 import React, { useEffect, useState } from "react";
 import { Text, View, StyleSheet, TextInput, ScrollView, KeyboardAvoidingView, Platform, TouchableOpacity, Alert } from "react-native";
 import FlashMessage, { showMessage } from "react-native-flash-message";
-import { cambiarClave } from "../../Src/Services/AuthService";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import api from "../../Src/Services/Conexion";
+import { cambiarClave, olvideMiClave } from "../../Src/Services/AuthService";
+
+import { useRoute } from "@react-navigation/native";
 
 export default function Cambiar_clave() {
+    const route = useRoute();
+    const rol = route.params.rol;
     const [clave, setClave] = useState("");
     const [confirmarClave, setConfirmarClave] = useState("");
-    const [usuario, setUsuario] = useState(null);
-    const [rol, setRol] = useState("");
-    useEffect(() => {
-        const cargarRol = async () => {
+    const [correo, setCorreo] = useState("");
 
-            const rolUsuario = await AsyncStorage.getItem("rolUser");
-            if (!rolUsuario) {
-                showMessage({
-                    message: "Error de rol 📞",
-                    description: "No se pudo cargar el rol porfavor, volver a iniciar sesion 😰",
-                    type: "danger"
-                });
-                await AsyncStorage.multiRemove(["userToken", "rolUser"]);
-            }
-            setRol(rolUsuario);
-
-        }
-        cargarRol();
-    }, [])
-
-    useEffect(() => {
-        if (!rol) {
-            return;
-        }
-        const CargarPerfil = async () => {
-            try {
-                const token = await AsyncStorage.getItem("userToken");
-                if (!token) {
-                    await AsyncStorage.multiRemove(["userToken", "rolUser"]);
-                    Alert.alert("No se encontró el token, redirigiendo al login");
-                    return;
-                }
-                const response = await api.get("/me/" + rol);
-                setUsuario(response.data);
-            } catch (error) {
-                console.error("Error al cargar el perfil:", error);
-            }
-        };
-
-        CargarPerfil();
-    }, [rol]);
 
     const enviarForm = async () => {
-        if (clave === "" || confirmarClave === "") {
+        if (clave === "" || confirmarClave === "" || correo === "") {
             Alert.alert("Campos incompletos ☹️", "Debes rellenar todos los campos")
 
             return;
@@ -67,18 +30,12 @@ export default function Cambiar_clave() {
             Alert.alert("Error minimo no alcanzado 😰", "La contraseña debe tener minimo 6 caracteres")
 
             return;
-        }
-
-        if (!usuario?.user?.id) {
-            Alert.alert("Error ID 😰", "No pudimos encontrar el ID del usuario")
-
-            return;
-        }
+        }    
 
 
         try {
-            const id = usuario?.user?.id;
-            const response = await cambiarClave(clave, id, rol);
+
+            const response = await olvideMiClave(rol,clave, correo);
             if (!response.success) {
                 Alert.alert("Error cambio de clave ☹️", response.message)
                 return;
@@ -100,7 +57,14 @@ export default function Cambiar_clave() {
                 <View style={styles.container}>
                     <FlashMessage position="top" />
                     <View style={styles.form}>
-                        <Text style={styles.title}>Cambiar clave 🔐</Text>
+                        <Text style={styles.title}>Olvideo mi clave 🔐</Text>
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Correo"
+                            placeholderTextColor="#94a3b8"
+                            value={correo}
+                            onChangeText={setCorreo}
+                        />
                         <TextInput
                             style={styles.input}
                             placeholder="Nueva Contraseña"
