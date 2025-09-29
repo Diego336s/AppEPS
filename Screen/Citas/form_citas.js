@@ -19,7 +19,7 @@ import { agendarCita, cargarDatosCita } from "../../Src/Services/PacientesServic
 
 export default function NuevaCitaScreen({ navigation }) {
 
- 
+  const [rol, setRol] = useState("");
   const [cargarEspecialidades, setCargarEspecialidades] = useState([]);
   const [cargarMedicosFiltrados, setCargarMedicosFiltrados] = useState([]);
   const [usuario, setUsuario] = useState(null);
@@ -48,10 +48,30 @@ export default function NuevaCitaScreen({ navigation }) {
 
   // Picker Hora
   const [show, setShow] = useState(false);
- 
+
 
   useEffect(() => {
+    const cargarRol = async () => {
 
+      const rolUsuario = await AsyncStorage.getItem("rolUser");
+      if (!rolUsuario) {
+        showMessage({
+          message: "Error de rol 📞",
+          description: "No se pudo cargar el rol porfavor, volver a iniciar sesion 😰",
+          type: "danger"
+        });
+        await AsyncStorage.multiRemove(["userToken", "rolUser"]);
+      }
+      setRol(rolUsuario);
+
+    }
+    cargarRol();
+  }, [])
+
+  useEffect(() => {
+    if (!rol) {
+      return;
+    }
     const CargarPerfil = async () => {
       try {
         const token = await AsyncStorage.getItem("userToken");
@@ -59,7 +79,7 @@ export default function NuevaCitaScreen({ navigation }) {
           Alert.alert("No se encontro el token del usuario, redirigiendo al login");
           return;
         }
-        const response = await api.get("/me");
+        const response = await api.get("/me/" + rol);
         console.log(response.data);
         setUsuario(response.data);
       } catch (error) {
@@ -96,21 +116,26 @@ export default function NuevaCitaScreen({ navigation }) {
     const fetchEspecialidades = async () => {
       try {
         const response = await api.get("/listarEspecialidades");
-        setCargarEspecialidades(response.data);
+        setCargarEspecialidades(response.data.especialidades);
       } catch (error) {
         console.error("Error al cargar las especialidades:", error);
       }
     };
     fetchEspecialidades();
-  }, []);
+  }, [rol]);
 
   const cargarMedicos = async (idEspecialidad) => {
     if (idEspecialidad !== "") {
       try {
         const response = await api.get(
-          "/filtrarMedicosPorEspecialidad/" + idEspecialidad
+          "filtrarMedicosPorEspecialidad/" + idEspecialidad
         );
-        setCargarMedicosFiltrados(response.data);
+        if (!response.data.success) {
+          Alert.alert("Disculpa 😣", response.data.message)
+          return;
+        }
+        setCargarMedicosFiltrados(response.data.medicos);
+
       } catch (error) {
         console.error("Error al cargar los médicos:", error);
       }

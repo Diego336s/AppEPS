@@ -16,6 +16,9 @@ import { actualizarPacientes } from "../../Src/Services/PacientesService";
 import api from "../../Src/Services/Conexion";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import FlashMessage, { showMessage } from "react-native-flash-message";
+import { actualizarAdmin } from "../../Src/Services/AdminService";
+import { actualizarDoctor } from "../../Src/Services/MedicosService";
+import { actualizarRecepcionista } from "../../Src/Services/RecepcionService";
 
 export default function Editar_perfil({ navigation }) {
   const [usuario, setUsuario] = useState(null);
@@ -28,24 +31,30 @@ export default function Editar_perfil({ navigation }) {
   const [nacionalidad, setNacionalidad] = useState("");
   const [rh, setRh] = useState("");
   const [fechaNacimiento, setFechaNacimiento] = useState("");
-  const [rol, setRol] = useState(null);
+  const [rol, setRol] = useState("");
+  useEffect(() => {
+    const cargarRol = async () => {
 
-  const cargarRol = async () => {
+      const rolUsuario = await AsyncStorage.getItem("rolUser");
+      if (!rolUsuario) {
+        showMessage({
+          message: "Error de rol 📞",
+          description: "No se pudo cargar el rol porfavor, volver a iniciar sesion 😰",
+          type: "danger"
+        });
+        await AsyncStorage.multiRemove(["userToken", "rolUser"]);
+      }
+      setRol(rolUsuario);
 
-    const rolUsuario = await AsyncStorage.getItem("rolUser");
-    if (!rolUsuario) {
-      showMessage({
-        message: "Error de rol 📞",
-        description: "No se pudo cargar el rol porfavor, volver a iniciar sesion 😰",
-        type: "danger"
-      });
-      await AsyncStorage.multiRemove(["userToken", "rolUser"]);
     }
-    setRol(rolUsuario);
+    cargarRol();
+  }, [])
 
-  }
 
   useEffect(() => {
+    if (!rol) {
+      return;
+    }
     const CargarPerfil = async () => {
       try {
         const token = await AsyncStorage.getItem("userToken");
@@ -54,7 +63,7 @@ export default function Editar_perfil({ navigation }) {
           Alert.alert("No se encontró el token, redirigiendo al login");
           return;
         }
-        const response = await api.get("/me/"+rol);
+        const response = await api.get("/me/" + rol);
         setUsuario(response.data);
       } catch (error) {
         console.error("Error al cargar el perfil:", error);
@@ -62,10 +71,9 @@ export default function Editar_perfil({ navigation }) {
     };
 
     CargarPerfil();
-    cargarRol();
 
 
-  }, []);
+  }, [rol]);
 
   useEffect(() => {
 
@@ -106,19 +114,39 @@ export default function Editar_perfil({ navigation }) {
 
 
     try {
-      const result = await actualizarPacientes(id, nombre, apellido, documento, telefono);
-      if (!result?.success) {
-        Alert.alert(result?.message)
-        console.log(result?.message);
+      let response;
+      switch (rol) {
+        case "Paciente":
+          response = await actualizarPacientes(id, nombre, apellido, documento, telefono);
+          break;
+        case "Doctor":
+          response = await actualizarDoctor(id, nombre, apellido, documento, telefono);
+          break;
+        case "Admin":
+          response = await actualizarAdmin(id, nombre, apellido, documento, telefono);
+          break;
+        case "Recepcionista":
+          response = await actualizarRecepcionista(id, nombre, apellido, documento, telefono);
+          break;
+
+        default:
+          Alert.alert("Error rol", "No pudimos validar tu rol, Inicia Sesion otra vez");
+          await AsyncStorage.multiRemove(["userToken", "rolUser"]);
+          break;
+      }
+
+      if (!response?.success) {
+        Alert.alert(response?.message)
+        console.log(response?.message);
         return;
       }
 
-      Alert.alert(result.message);
+      Alert.alert(rol + " Actualizado", response.message);
       navigation.navigate("Perfil_paciente");
 
     } catch (error) {
-      Alert.alert("Error al registrar " + result.message || "Ocurrio un error al actualizar");
-      console.log("Error al registrar " + result.message || "Ocurrio un error al actualizar");
+      Alert.alert("Error al registrar " + response.message || "Ocurrio un error al actualizar");
+      console.log("Error al registrar " + response.message || "Ocurrio un error al actualizar");
 
     }
 

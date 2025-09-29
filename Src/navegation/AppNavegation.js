@@ -3,6 +3,7 @@ import AuthNavegation from "./AuthNavegation";
 import PacienteNavegacion from "./PacienteNavegacion";
 import RecepcionNavegacion from "./RecepcionNavegacion";
 import AdminNavegacion from "./AdminNavegacion";
+import DoctorNavegacion from "./DoctorNavegacion"
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useState, useEffect, useRef, use } from "react";
 import { AppState } from "react-native";

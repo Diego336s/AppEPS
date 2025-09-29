@@ -8,7 +8,29 @@ export default function Cambiar_clave() {
     const [clave, setClave] = useState("");
     const [confirmarClave, setConfirmarClave] = useState("");
     const [usuario, setUsuario] = useState(null);
+    const [rol, setRol] = useState("");
     useEffect(() => {
+        const cargarRol = async () => {
+
+            const rolUsuario = await AsyncStorage.getItem("rolUser");
+            if (!rolUsuario) {
+                showMessage({
+                    message: "Error de rol 📞",
+                    description: "No se pudo cargar el rol porfavor, volver a iniciar sesion 😰",
+                    type: "danger"
+                });
+                await AsyncStorage.multiRemove(["userToken", "rolUser"]);
+            }
+            setRol(rolUsuario);
+
+        }
+        cargarRol();
+    }, [])
+
+    useEffect(() => {
+         if(!rol){
+      return;
+    }
         const CargarPerfil = async () => {
             try {
                 const token = await AsyncStorage.getItem("userToken");
@@ -17,7 +39,7 @@ export default function Cambiar_clave() {
                     Alert.alert("No se encontró el token, redirigiendo al login");
                     return;
                 }
-                const response = await api.get("/me");
+                const response = await api.get("/me/"+rol);
                 setUsuario(response.data);
             } catch (error) {
                 console.error("Error al cargar el perfil:", error);
@@ -25,7 +47,7 @@ export default function Cambiar_clave() {
         };
 
         CargarPerfil();
-    }, []);
+    }, [rol]);
 
     const enviarForm = async () => {
         if (clave === "" || confirmarClave === "") {
@@ -67,7 +89,7 @@ export default function Cambiar_clave() {
 
         try {
             const id = usuario?.user?.id;
-            const response = await cambiarClave(clave, id); 
+            const response = await cambiarClave(clave, id, rol); 
             if(!response.success){
                 Alert.alert("Error cambio de clave ☹️",response.message)
                 return;

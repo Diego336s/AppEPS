@@ -196,9 +196,28 @@ export const logoutDoctor = async () => {
     }
 };
 
-export const cambiarClave = async (clave, id) => {
+export const cambiarClave = async (clave, id, rol) => {
     try {
-        const response = await api.post("/cambiarClave/" + id, { clave });
+        let response;
+        switch (rol) {
+            case "Paciente":
+                response = await api.post("cambiar/clave/paciente/" + id, { clave });
+                break;
+            case "Doctor":
+                response = await api.post("cambiar/clave/medico/" + id, { clave });
+                break;
+            case "Admin":
+                response = await api.post("cambiar/clave/Admin/" + id, { clave });
+                break;
+            case "Recepcionista":
+                response = await api.post("cambiar/clave/recepcionista/" + id, { clave });
+                break;
+            default:
+                Alert.alert("Error rol", "No pudimos validar tu rol, Inicia Sesion otra vez");
+                await AsyncStorage.multiRemove(["userToken", "rolUser"]);
+                break;
+        }
+
         if (!response.data.success) {
             return { success: false, message: "No se pudo cambiar la clave, reintentar nuevamente" }
         }
@@ -211,14 +230,35 @@ export const cambiarClave = async (clave, id) => {
         console.error("Error", error.message)
         return {
             success: false,
-            message: error.message
-        }        
+            message: error?.response?.data?.message || "Error al reprogramar la cita",
+            status: error?.response?.status || 500
+        };
     }
 }
 
-export const cambiarCorreo = async (correo, id) => {
+export const cambiarCorreo = async (correo, id, rol) => {
     try {
-        const response = await api.post("/cambiarCorreo/" + id, { correo });
+        let response;
+        switch (rol) {
+            case "Paciente":
+                response = await api.post("cambiar/correo/paciente/" + id, { correo });
+                break;
+            case "Doctor":
+                response = await api.post("cambiar/correo/medico/" + id, { correo });
+                break;
+            case "Admin":
+                 response = await api.post("cambiar/correo/Admin/" + id, { correo });
+                break;
+            case "Recepcionista":
+                 response = await api.post("cambiar/correo/recepcionista/" + id, { correo });
+                break;
+
+            default:
+                Alert.alert("Error rol", "No pudimos validar tu rol, Inicia Sesion otra vez");
+                await AsyncStorage.multiRemove(["userToken", "rolUser"]);
+                break;
+        }
+        
         if (!response.data.success) {
             return { success: false, message: response.data.message ? response.data.message : "No se pudo cambiar el correo, reintentar nuevamente" }
         }
@@ -229,10 +269,11 @@ export const cambiarCorreo = async (correo, id) => {
 
     } catch (error) {
         console.error("Error", error.message)
-        return {
+       return {
             success: false,
-            message: error.message
-        }
+            message: error?.response?.data?.message || "Error al reprogramar la cita",
+            status: error?.response?.status || 500
+        };
     }
 }
 

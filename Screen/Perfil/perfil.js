@@ -6,24 +6,32 @@ import api from "../../Src/Services/Conexion";
 export default function PerfilScreen({ navigation }) {
   const [usuario, setUsuario] = useState(null);
   const [cargando, setCargando] = useState(true);
-  const [rol, setRol] = useState(null);
+ 
 
-  const cargarRol = async () => {
+   const [rol, setRol] = useState("");
+    useEffect(() => {
+        const cargarRol = async () => {
 
-    const rolUsuario = await AsyncStorage.getItem("rolUser");
-    if (!rolUsuario) {
-      showMessage({
-        message: "Error de rol 📞",
-        description: "No se pudo cargar el rol porfavor, volver a iniciar sesion 😰",
-        type: "danger"
-      });
-      await AsyncStorage.multiRemove(["userToken", "rolUser"]);
-    }
-    setRol(rolUsuario);
+            const rolUsuario = await AsyncStorage.getItem("rolUser");
+            if (!rolUsuario) {
+                showMessage({
+                    message: "Error de rol 📞",
+                    description: "No se pudo cargar el rol porfavor, volver a iniciar sesion 😰",
+                    type: "danger"
+                });
+                await AsyncStorage.multiRemove(["userToken", "rolUser"]);
+            }
+            setRol(rolUsuario);
 
-  }
+        }
+        cargarRol();
+    }, [])
+
 
   useEffect(() => {
+     if(!rol){
+      return;
+    }
     const CargarPerfil = async () => {
       try {
         const token = await AsyncStorage.getItem("userToken");
@@ -66,8 +74,8 @@ export default function PerfilScreen({ navigation }) {
       }
     }
     CargarPerfil();
-    cargarRol();
-  }, []);
+  
+  }, [rol]);
 
 
 

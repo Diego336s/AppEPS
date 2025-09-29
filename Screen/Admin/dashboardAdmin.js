@@ -2,17 +2,17 @@ import React, { useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import api from "../../Src/Services/Conexion";
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert } from "react-native";
-import { Ionicons, MaterialIcons, FontAwesome5 } from "@expo/vector-icons";
-import { cargarCitasConfirmadasPorPaciente } from "../../Src/Services/PacientesService";
-import FlashMessage, { showMessage } from "react-native-flash-message";
+import { Ionicons, MaterialIcons, FontAwesome5, FontAwesome6, AntDesign, MaterialCommunityIcons, Entypo } from "@expo/vector-icons";
+
+
 
 
 export default function DashboardScreen({ navigation }) {
   const [usuario, setUsuario] = useState(null)
-  const [citas, setCitas] = useState(null);
-  const [noHaycitas, setNohayCitas] = useState(true);
-  const [citasEsteMes, setCitasEsteMes] = useState("");
-  const [totalCita, setTotalCita] = useState("");
+  const [totalMedicos, setTotalMedicos] = useState("");
+  const [totalEspecialidades, setTotalEspecialidades] = useState("");
+
+
 
   useEffect(() => {
     const CargarPerfil = async () => {
@@ -23,7 +23,7 @@ export default function DashboardScreen({ navigation }) {
           Alert.alert("No se encontró el token, redirigiendo al login");
           return;
         }
-        const response = await api.get("/me/admin");
+        const response = await api.get("/me/Admin");
         setUsuario(response.data);
       } catch (error) {
         const mensaje =
@@ -37,69 +37,37 @@ export default function DashboardScreen({ navigation }) {
     CargarPerfil();
   }, []);
 
-  
 
-  
-  const alertaCancelarCita = (id) => {
-
-    Alert.alert(
-      "Cancelar Cita",
-      "¿Seguro que quieres cancelar la cita?",
-      [
-        {
-          text: "No", // Texto del botón
-          onPress: () => console.log("Cancelado ❌"),
-          style: "cancel", // estilo especial para iOS
-        },
-        {
-          text: "Sí",
-          onPress: () => {
-            console.log("Cita cancelada ✅");
-            // aquí llamas a la función que cancela la cita
-            cancelarCita(id);
-          },
-        },
-      ],
-      { cancelable: true } // permite cerrar tocando fuera
-    );
-
-
-  }
-
-
-  const cancelarCita = async (id) => {
-    if (id === "") {
-      Alert.alert("No se a podido obtener el ID de la cita, Intenta nuevamente")
+  useEffect(() => {
+    const cargarTotalMedicos = async () => {
+          try {
+            const response = await api.get("totalMedicos");
+            setTotalMedicos(response.data.total);
+          } catch (error) {
+            Alert.alert(error.response.data.message || "Error al contar los medicos")
+          }
     }
-    const estado = "Cancelada";
-    try {
-      const response = await api.post("cancelarCita/" + id, { estado });
-      if (!response.data.success) {
-        Alert.alert("Error ❌", response?.data.message || "Error al intentar cancelar la cita")
-      }
+    cargarTotalMedicos();
 
-      showMessage({
-        message: "Cita cancelada 🫡",
-        description: "Su cita ha sido cancelada exitosamente",
-        type: "success"
-      });
-      cargarCitas();
-
-    } catch (error) {
-      const mensaje =
-        error?.response?.data?.message ||
-        error?.message ||
-        "Error interno, intente más tarde";
-      Alert.alert("Error", mensaje);
+    const cargarTotalEspecialidades = async () => {
+          try {
+            const response = await api.get("totalEspecialidades");
+            setTotalEspecialidades(response.data.total);
+          } catch (error) {
+            Alert.alert(error.response.data.message || "Error al contar los medicos")
+          }
     }
+    cargarTotalEspecialidades();
+  }, [])
 
-  }
+
 
   return (
     <ScrollView style={styles.container}>
-      <FlashMessage position="top" />
+
       {/* Header */}
       <View style={styles.header}>
+
         <Ionicons name="person-circle" size={50} color="white" />
         <View style={{ marginLeft: 10 }}>
           <Text style={styles.welcome}>Bienvenido, {usuario?.user.nombre}</Text>
@@ -110,16 +78,17 @@ export default function DashboardScreen({ navigation }) {
       {/* Resumen rápido */}
       <View style={styles.summaryRow}>
         <View style={styles.summaryCard}>
-          <MaterialIcons name="monitor-heart" size={24} color="white" />
-          <Text style={styles.summaryNumber}>{totalCita}</Text>
-          <Text style={styles.summaryText}>Total de citas</Text>
+          <MaterialCommunityIcons name="medical-bag" size={24} color="white" />
+
+          <Text style={styles.summaryNumber}>{totalMedicos}</Text>
+          <Text style={styles.summaryText}>Total de medicos</Text>
         </View>
 
         <View style={styles.summaryCard}>
+          <MaterialCommunityIcons name="car-esp" size={24} color="white" />
 
-          <Ionicons name="calendar" size={24} color="white" />
-          <Text style={styles.summaryNumber}>{citasEsteMes}</Text>
-          <Text style={styles.summaryText}>Citas este mes</Text>
+          <Text style={styles.summaryNumber}>{totalEspecialidades}</Text>
+          <Text style={styles.summaryText}>Total de especialidades</Text>
         </View>
 
 
@@ -128,59 +97,40 @@ export default function DashboardScreen({ navigation }) {
       {/* Acciones rápidas */}
       <Text style={styles.sectionTitle}>Acciones Rápidas</Text>
       <View style={styles.actionsRow}>
-        <TouchableOpacity onPress={() => { navigation.navigate("formCitas") }} style={[styles.actionCard, { backgroundColor: "#2563eb" }]}>
-          <Ionicons name="add-circle" size={22} color="white" />
-          <Text style={styles.actionText}>Nueva Cita</Text>
+        <TouchableOpacity onPress={() => { navigation.navigate("ListarRecepcionistas") }} style={[styles.actionCard, { backgroundColor: "#2563eb" }]}>
+
+          <FontAwesome6 name="headset" size={22} color="white" />
+          <Text style={styles.actionText}>Recepcionistas</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={() => { navigation.navigate("buscarDoctores") }} style={[styles.actionCard, { backgroundColor: "#22c55e" }]}>
-          <Ionicons name="search" size={22} color="white" />
-          <Text style={styles.actionText}>Buscar Doctor</Text>
+        <TouchableOpacity onPress={() => { navigation.navigate("Doctores") }} style={[styles.actionCard, { backgroundColor: "#22c55e" }]}>
+          <FontAwesome5 name="briefcase-medical" size={22} color="white" />
+          <Text style={styles.actionText}>Doctores</Text>
         </TouchableOpacity>
       </View>
 
       <View style={styles.actionsRow}>
-        <TouchableOpacity onPress={() => { navigation.navigate("historialPaciente") }} style={[styles.actionCard, { backgroundColor: "#a855f7" }]}>
-          <FontAwesome5 name="heartbeat" size={20} color="white" />
-          <Text style={styles.actionText}>Historial citas</Text>
+        <TouchableOpacity onPress={() => { navigation.navigate("Form_personal") }} style={[styles.actionCard, { backgroundColor: "#a855f7", alignContent: "center" }]}>
+          <AntDesign name="usergroup-add" size={20} color="white" />
+
+          <Text style={styles.actionText}>Agregar Personal</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Próximas citas */}<Text style={styles.sectionTitle}>Próximas Citas</Text>
-      {noHaycitas && (
-        <Text style={{ color: "white" }}>
-          No hay citas disponibles
-        </Text>
-      )}
-      {citas && citas.map((itemsCita, index) => (
-        <View key={index} style={styles.appointmentCard}>
-          <Text style={styles.doctor}>
-            Doc. {itemsCita?.nombre_medico} {itemsCita?.apellido_medico}
-          </Text>
-          <Text style={styles.specialty}>
-            {itemsCita?.especialidad}
-          </Text>
-          <Text style={styles.date}>
-            📅 {itemsCita?.fecha} 🕒 {itemsCita?.hora_inicio}
-          </Text>
-          <Text style={styles.location}>📝 {itemsCita?.descripcion}</Text>
+      <View style={styles.actionsRow}>
+        <TouchableOpacity onPress={() => { navigation.navigate("ListarEspecialidades") }} style={[styles.actionCard, { backgroundColor: "#d79032ff", alignContent: "center" }]}>
+          <MaterialIcons name="folder-special" size={20} color="white" />
 
-          <View style={styles.buttonsRow}>
-            <TouchableOpacity
-              onPress={() => navigation.navigate("formReprogramar", { id: itemsCita?.id })}
-              style={styles.rescheduleBtn}
-            >
-              <Text style={styles.btnText}>Reprogramar</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => alertaCancelarCita(itemsCita?.id)}
-              style={styles.cancelBtn}
-            >
-              <Text style={styles.btnText}>Cancelar</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      ))}
+          <Text style={styles.actionText}>Especialidades</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => { navigation.navigate("FromEspecialidad", { id: "" }) }} style={[styles.actionCard, { backgroundColor: "#ff0df7ff", alignContent: "center" }]}>
+          <Entypo name="add-to-list" size={20} color="white" />
+
+          <Text style={styles.actionText}>Agregar ESP</Text>
+        </TouchableOpacity>
+      </View>
+
+
 
 
 
@@ -248,11 +198,13 @@ const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 10,
     marginHorizontal: 5,
+    height: 50
   },
   actionText: {
     color: "white",
     marginLeft: 10,
     fontWeight: "bold",
+
   },
   appointmentCard: {
     backgroundColor: "#1e293b",

@@ -7,8 +7,30 @@ import api from "../../Src/Services/Conexion";
 export default function Cambiar_correo() {
     const [correo, setCorreo] = useState("");
     const [confirmarCorreo, setConfirmarCorreo] = useState("");
- const [usuario, setUsuario] = useState(null);
+    const [usuario, setUsuario] = useState(null);
+    const [rol, setRol] = useState("");
     useEffect(() => {
+        const cargarRol = async () => {
+
+            const rolUsuario = await AsyncStorage.getItem("rolUser");
+            if (!rolUsuario) {
+                showMessage({
+                    message: "Error de rol 📞",
+                    description: "No se pudo cargar el rol porfavor, volver a iniciar sesion 😰",
+                    type: "danger"
+                });
+                await AsyncStorage.multiRemove(["userToken", "rolUser"]);
+            }
+            setRol(rolUsuario);
+
+        }
+        cargarRol();
+    }, [])
+
+    useEffect(() => {
+        if (!rol) {
+            return;
+        }
         const CargarPerfil = async () => {
             try {
                 const token = await AsyncStorage.getItem("userToken");
@@ -17,7 +39,7 @@ export default function Cambiar_correo() {
                     Alert.alert("No se encontró el token, redirigiendo al login");
                     return;
                 }
-                const response = await api.get("/me");
+                const response = await api.get("/me/" + rol);
                 setUsuario(response.data);
             } catch (error) {
                 console.error("Error al cargar el perfil:", error);
@@ -25,7 +47,7 @@ export default function Cambiar_correo() {
         };
 
         CargarPerfil();
-    }, []);
+    }, [rol]);
 
     const enviarForm = async () => {
         if (correo === "" || confirmarCorreo === "") {
@@ -46,36 +68,36 @@ export default function Cambiar_correo() {
             return;
         }
 
-        
-       
-        if(!usuario?.user?.id){
-             showMessage({
+
+
+        if (!usuario?.user?.id) {
+            showMessage({
                 message: "Error ID 😰",
                 description: "No pudimos encontrar el ID del usuario",
                 type: "danger"
             });
             return;
-        }       
+        }
 
 
         try {
             const id = usuario?.user?.id;
-            const response = await cambiarCorreo(correo, id); 
-            if(!response.success){
-                Alert.alert("Error cambio de correo ☹️",response.message)
+            const response = await cambiarCorreo(correo, id, rol);
+            if (!response.success) {
+                Alert.alert("Error cambio de correo ☹️", response.message)
                 return;
             }
             Alert.alert("Cambio de correo exitoso 🫡", response.message)
-            
+
         } catch (error) {
-           Alert.alert("Error al cambiar el correo", error.message)
+            Alert.alert("Error al cambiar el correo", error.message)
         }
     }
 
-  
 
 
-  
+
+
     return (
 
         <KeyboardAvoidingView

@@ -23,7 +23,7 @@ export default function DashboardScreen({ navigation }) {
           Alert.alert("No se encontró el token, redirigiendo al login");
           return;
         }
-        const response = await api.get("/me/paciente");
+        const response = await api.get("/me/Paciente");
         setUsuario(response.data);
       } catch (error) {
         const mensaje =
@@ -132,7 +132,7 @@ export default function DashboardScreen({ navigation }) {
     }
     const estado = "Cancelada";
     try {
-      const response = await api.post("cancelarCita/" + id, { estado });
+      const response = await api.post("cambiarEstadoCita/" + id, { estado });
       if (!response.data.success) {
         Alert.alert("Error ❌", response?.data.message || "Error al intentar cancelar la cita")
       }
@@ -199,7 +199,7 @@ export default function DashboardScreen({ navigation }) {
       </View>
 
       <View style={styles.actionsRow}>
-        <TouchableOpacity onPress={() => { navigation.navigate("historialPaciente") }} style={[styles.actionCard, { backgroundColor: "#a855f7" }]}>
+        <TouchableOpacity onPress={() => { navigation.navigate("HistorialCitas") }} style={[styles.actionCard, { backgroundColor: "#a855f7" }]}>
           <FontAwesome5 name="heartbeat" size={20} color="white" />
           <Text style={styles.actionText}>Historial citas</Text>
         </TouchableOpacity>

@@ -83,8 +83,28 @@ export default function ReprogramarCita({ navigation }) {
         }
 
         mostrarDatos();
-       
+
     }, [datosCita]);
+
+    const [rol, setRol] = useState(null);
+    useEffect(() => {
+        const cargarRol = async () => {
+
+            const rolUsuario = await AsyncStorage.getItem("rolUser");
+            if (!rolUsuario) {
+                showMessage({
+                    message: "Error de rol 📞",
+                    description: "No se pudo cargar el rol porfavor, volver a iniciar sesion 😰",
+                    type: "danger"
+                });
+                await AsyncStorage.multiRemove(["userToken", "rolUser"]);
+            }
+            setRol(rolUsuario);
+
+        }
+        cargarRol();
+    }, [])
+
 
 
     useEffect(() => {
@@ -96,7 +116,7 @@ export default function ReprogramarCita({ navigation }) {
                     Alert.alert("No se encontro el token del usuario, redirigiendo al login");
                     return;
                 }
-                const response = await api.get("/me");
+                const response = await api.get("/me/" + rol);
                 console.log(response.data);
                 setUsuario(response.data);
             } catch (error) {

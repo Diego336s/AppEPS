@@ -2,11 +2,13 @@ import React, { useState, useEffect } from "react";
 import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, Alert } from "react-native";
 import { listarMedicosConEspecialidad } from "../../Src/Services/MedicosService";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-export default function BuscarDoctoresScreen() {
+import api from "../../Src/Services/Conexion";
+import FlashMessage, { showMessage } from "react-native-flash-message";
+export default function BuscarDoctoresScreen({navigation}) {
 
   const [rol, setRol] = useState("");
   const [medicos, setMedicos] = useState([]);
-  const [mensaje, setMensaje] = useState(null);
+  const [noHayMedicos, setNoHayMedicos] = useState(true);
   const [searchText, setSearchText] = useState(""); // 👈 Estado de búsqueda
 
   useEffect(() => {
@@ -17,24 +19,80 @@ export default function BuscarDoctoresScreen() {
     cargarRol();
   }, []);
 
+  const CargarMedicos = async () => {
+    try {
+      const response = await listarMedicosConEspecialidad();
+      if (!response.success) {
+        setNoHayMedicos(true);
+        setMedicos([]);
+        return;
+      }
+      setNoHayMedicos(false);
+      setMedicos(response?.medicos);
+    } catch (error) {
+      console.error("Error al cargar los doctores: " + error.message);
+      Alert.alert("Error, no se puede cargar los doctores.");
+    }
+  };
   useEffect(() => {
 
-    const CargarMedicos = async () => {
-      try {
-        const response = await listarMedicosConEspecialidad();
-        if (response?.message) {
-          setMensaje(response?.message);
-          setMedicos([]);
-          return;
-        }
-        setMedicos(response?.medicos || []);
-      } catch (error) {
-        console.error("Error al cargar los doctores: " + error.message);
-        Alert.alert("Error, no se puede cargar los doctores.");
-      }
-    };
+
     CargarMedicos();
   }, []);
+
+  const alertaEliminarMedico = (id) => {
+
+    Alert.alert(
+      "Eliminar medico",
+      "¿Seguro que quieres eliminar el medico?",
+      [
+        {
+          text: "No", // Texto del botón
+          onPress: () => console.log("Cancelado ❌"),
+          style: "cancel", // estilo especial para iOS
+        },
+        {
+          text: "Sí",
+          onPress: () => {
+
+            // aquí llamas a la función que cancela la cita
+            eliminarMedico(id);
+          },
+        },
+      ],
+      { cancelable: true } // permite cerrar tocando fuera
+    );
+
+
+  }
+  const eliminarMedico = async (id) => {
+    if (id === "") {
+      Alert.alert("No se a podido obtener el ID del medico, Intenta nuevamente")
+    }
+
+    try {
+      const response = await api.delete("eliminarMedico/" + id);
+      if (!response.data.success) {
+        Alert.alert("Error ❌", response?.data.message || "Error al intentar eliminar el medico")
+        return;
+      }
+
+      showMessage({
+        message: "Medico eliminado 🫡",
+        description: "El medico a sido eliminado correctamente",
+        type: "success"
+      });
+CargarMedicos();
+
+    } catch (error) {
+      const mensaje =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Error interno, intente más tarde";
+      Alert.alert("Error", mensaje);
+    }
+
+  }
 
   // 👇 Filtrar médicos según lo escrito
   const doctoresFiltrados = medicos?.filter((item) => {
@@ -48,6 +106,7 @@ export default function BuscarDoctoresScreen() {
 
   return (
     <View style={styles.container}>
+       <FlashMessage position="top" />
       <Text style={styles.titulo}>Buscar Doctores</Text>
       <Text style={styles.subtitulo}>Encuentra el especialista ideal</Text>
 
@@ -59,7 +118,13 @@ export default function BuscarDoctoresScreen() {
         onChangeText={setSearchText} // 👈 actualiza estado
       />
 
-      {mensaje && <Text style={{ color: "white" }}>{mensaje}</Text>}
+      {noHayMedicos && (
+        <View>
+          <Text style={{ color: "white" }}>
+            No hay medicos registrados
+          </Text>
+        </View>
+      )}
 
       <FlatList
         data={doctoresFiltrados} // 👈 se muestran filtrados
@@ -71,18 +136,23 @@ export default function BuscarDoctoresScreen() {
             <Text style={styles.telefono}>{item.telefono}</Text>
             <Text style={styles.telefono}>{item.correo}</Text>
             {rol === "Admin" && (
+              <View>
+                <Text style={styles.telefono}>{item.documento}</Text>
+              </View>
+            )}
+            {rol === "Admin" && (
               <View style={styles.buttonsRow}>
                 <TouchableOpacity
-                  onPress={() => navigation.navigate("formReprogramar", { id: itemsCita?.id })}
+                  onPress={() => navigation.navigate("FormActualizarPersonal", { id: item?.id, rol:"Doctor"})}
                   style={styles.rescheduleBtn}
                 >
-                  <Text style={styles.btnText}>Reprogramar</Text>
+                  <Text style={styles.btnText}>Actualizar</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  onPress={() => alertaCancelarCita(item?.id)}
+                  onPress={() => alertaEliminarMedico(item?.id)}
                   style={styles.cancelBtn}
                 >
-                  <Text style={styles.btnText}>Cancelar</Text>
+                  <Text style={styles.btnText}>Eliminar</Text>
                 </TouchableOpacity>
               </View>
             )}
