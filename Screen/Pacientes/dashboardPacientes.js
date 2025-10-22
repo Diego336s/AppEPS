@@ -4,7 +4,7 @@ import api from "../../Src/Services/Conexion";
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert } from "react-native";
 import { Ionicons, MaterialIcons, FontAwesome5 } from "@expo/vector-icons";
 import { cargarCitasConfirmadasPorPaciente } from "../../Src/Services/PacientesService";
-import FlashMessage, { showMessage } from "react-native-flash-message";
+import * as Notificaciones from "expo-notifications";
 import { useFocusEffect } from "@react-navigation/native";
 
 
@@ -14,6 +14,8 @@ export default function DashboardScreen({ navigation }) {
   const [noHaycitas, setNohayCitas] = useState(true);
   const [citasEsteMes, setCitasEsteMes] = useState("");
   const [totalCita, setTotalCita] = useState("");
+
+ 
 
   useEffect(() => {
     const CargarPerfil = async () => {
@@ -65,6 +67,7 @@ export default function DashboardScreen({ navigation }) {
 
   useEffect(() => {
     cargarCitas();
+
   }, [usuario]);
 
   const totalCitas = async () => {
@@ -81,7 +84,35 @@ export default function DashboardScreen({ navigation }) {
       Alert.alert("Error", mensaje);
     }
   }
+   const programarNotificacion = async () => {
+      const { status } = await Notificaciones.getPermissionsAsync();
+      const preferencia = await AsyncStorage.getItem("notificaciones_activas");
+      if (status !== "granted" || preferencia !== "true") {
+        Alert.alert("Notificaciones 🔔", "No tienes permisos para recibir notificaciones");
+        return;
+      }
 
+
+      try {
+        await Notificaciones.scheduleNotificationAsync({
+          content: {
+            title: "Citas Confirmadas 😷",
+            body: "Tienes citas confirmadas, no las dejes pasar"
+          },
+          trigger: {
+            type: "date",
+            date: new Date(Date.now()+10000), // se dispara en 2 min
+          },
+        });
+      
+      } catch (error) {
+        Alert.alert("Error al programar la notificacion");
+      }
+    }
+  useEffect(() => {    if (!citas) return;
+   
+    programarNotificacion();
+  }, [citas])
 
   const citasEsteMesPaciente = async () => {
     if (!usuario?.user?.id) return;
@@ -141,7 +172,7 @@ export default function DashboardScreen({ navigation }) {
         Alert.alert("Error ❌", response?.data.message || "Error al intentar cancelar la cita")
       }
 
-      Alert.alert("Cita cancelada 🫡", "Su cita ha sido cancelada exitosamente");      
+      Alert.alert("Cita cancelada 🫡", "Su cita ha sido cancelada exitosamente");
       cargarCitas();
 
     } catch (error) {
@@ -156,7 +187,7 @@ export default function DashboardScreen({ navigation }) {
 
   return (
     <ScrollView style={styles.container}>
-     
+
       {/* Header */}
       <View style={styles.header}>
         <Ionicons name="person-circle" size={50} color="white" />
