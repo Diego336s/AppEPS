@@ -41,6 +41,9 @@ export default function AppNavegation() {
       appState.current = nexAppState;
     }
     const subscription = AppState.addEventListener("change", handleAppStateChange);
+    return () => {
+      subscription.remove(); // cleanup
+    };
   }, []);
 
   useEffect(() => {

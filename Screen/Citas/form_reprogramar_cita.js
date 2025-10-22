@@ -110,6 +110,7 @@ export default function ReprogramarCita({ navigation }) {
     useEffect(() => {
 
         const CargarPerfil = async () => {
+            if(!rol || rol === null)return;
             try {
                 const token = await AsyncStorage.getItem("userToken");
                 if (!token) {

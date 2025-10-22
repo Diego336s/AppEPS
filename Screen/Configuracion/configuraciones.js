@@ -1,9 +1,29 @@
 import React, { useEffect } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, Switch, ScrollView, Alert } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, Switch, ScrollView, Alert, Button } from "react-native";
 import { useState } from "react";
 import { logoutPaciente, logoutAdmin, logoutRecepcion, logoutDoctor } from "../../Src/Services/AuthService";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as Notificaciones from "expo-notifications";
+import { useFocusEffect } from "@react-navigation/native";
 export default function ConfiguracionesScreen({ navigation }) {
+  const [Loading, setLoading] = useState(true);
+  const [permisoNotificaciones, setPermisoNotificaciones] = useState(false);
+  const checkPermisos = async () => {
+    const { status } = await Notificaciones.getPermissionsAsync();
+    const preferencia = await AsyncStorage.getItem("notificaciones_activas");
+    setPermisoNotificaciones(status === "granted" && preferencia === "true");
+    setLoading(false);
+
+  }
+  useEffect(() => {
+    checkPermisos();
+  }, []);
+  useFocusEffect(
+    React.useCallback(() => {
+      checkPermisos();
+    }, [])
+  );
+
   const [rol, setRol] = useState("");
   useEffect(() => {
     const cargarRol = async () => {
@@ -13,6 +33,75 @@ export default function ConfiguracionesScreen({ navigation }) {
     cargarRol();
   }, []);
 
+
+  const toggleSwitch = async (valor) => {
+    if (valor) {
+      const { status } = await Notificaciones.requestPermissionsAsync();
+      if (status === "granted") {
+        await AsyncStorage.setItem("notificaciones_activas", "true");
+        setPermisoNotificaciones(true);
+        Alert.alert("Permiso concedido ✅")
+      } else {
+        await AsyncStorage.setItem("notificaciones_activas", "false");
+        Alert.alert("Permiso denegado ❌")
+      }
+    } else {
+      await AsyncStorage.setItem("notificaciones_activas", "false");
+      setPermisoNotificaciones(false);
+      Alert.alert("Notificaciones desactivadas")
+    }
+  }
+
+  const programarNotificacion = async () => {
+    const { status } = await Notificaciones.getPermissionsAsync();
+    const preferencia = await AsyncStorage.getItem("notificaciones_activas");
+    if (status !== "granted" || preferencia !== "true") {
+      Alert.alert("Notificaciones 🔔", "No tienes permisos para recibir notificaciones");
+      return;
+    }
+
+
+    try {
+      await Notificaciones.scheduleNotificationAsync({
+        content: {
+          title: "Notificaciones programadas",
+          body: "Esta es una notificacion para 2 mnutos despues."
+        },
+        trigger: {
+          type: "date",
+          date: new Date(Date.now() + (2 * 60 * 1000)), // se dispara en 2 min
+        },
+      });
+      Alert.alert("Notificaciones 🔔", "Notificacion programa para 2 minutos despues");
+    } catch (error) {
+      Alert.alert("Error al programar la notificacion");
+    }
+  }
+  const programarRecurrente = async () => {
+    const { status } = await Notificaciones.getPermissionsAsync();
+    const preferencia = await AsyncStorage.getItem("notificaciones_activas");
+
+    if (status !== "granted" || preferencia !== "true") {
+      Alert.alert("Notificaciones 🔔", "No tienes permisos para recibir notificaciones");
+      return;
+    }
+    try {
+      await Notificaciones.scheduleNotificationAsync({
+        content: {
+          title: "Notificaciones programadas",
+          body: "Esta es una notificacion para 10 segundos despues."
+        },
+        trigger: {
+          type: "date",
+          date: new Date(Date.now() + 10000), // se dispara en 10 segundos
+        },
+      });
+      Alert.alert("Notificaciones 🔔", "Notificacion programa para 10 segundos despues");
+    } catch (error) {
+      Alert.alert("Error al programar la notificacion");
+    }
+
+  }
   const cerrarSesion = async () => {
     switch (rol) {
       case "Paciente":
@@ -49,13 +138,30 @@ export default function ConfiguracionesScreen({ navigation }) {
         </TouchableOpacity>
       </View>
 
+      {/* Sección: Notificaciones */}
+      <View style={styles.card}>
+        <Text style={styles.sectionTitle}>Notificaciones</Text>
+        <View style={styles.switchOption}>
+          <Text style={styles.optionText}>🔔 Activar Notificaciones</Text>
+          <Switch
+            value={permisoNotificaciones}
+            onValueChange={toggleSwitch}
+            thumbColor={permisoNotificaciones ? "#3b82f6" : "#888"}
+            trackColor={{ false: "#555", true: "#2563eb" }}
+          />
+        </View>
+        <Button title="Programar notificaciones en 2 min" onPress={programarNotificacion} />
+        <Button title="Programar notificaciones en 10 segundo" onPress={programarRecurrente} />
+      </View>
+
 
 
       {/* Sección: Otros */}
       <View style={styles.card}>
         <Text style={styles.sectionTitle}>Otros</Text>
 
-        <TouchableOpacity onPress={()=>{cerrarSesion()}} style={styles.option}>
+
+        <TouchableOpacity onPress={() => { cerrarSesion() }} style={styles.option}>
           <Text style={[styles.optionText, { color: "red" }]}>🚪 Cerrar Sesión</Text>
         </TouchableOpacity>
       </View>

@@ -1,49 +1,40 @@
 import React, { useEffect, useState } from "react";
 import { Text, View, StyleSheet, TextInput, ScrollView, KeyboardAvoidingView, Platform, TouchableOpacity, Alert } from "react-native";
 import FlashMessage, { showMessage } from "react-native-flash-message";
-import { cambiarClave, olvideMiClave } from "../../Src/Services/AuthService";
 
-import { useRoute } from "@react-navigation/native";
 
-export default function Cambiar_clave({ navigation }) {
-    const route = useRoute();
-    const rol = route.params.rol;
-    const [clave, setClave] = useState("");
-    const [confirmarClave, setConfirmarClave] = useState("");
+
+import { enviarCodigoDeVerificacion } from "../../Src/Services/AuthService";
+
+export default function EnvioCodigoDeVerificacion({ navigation }) {
+
     const [correo, setCorreo] = useState("");
-
+    const [cargando, setCargando] = useState(false);
 
     const enviarForm = async () => {
-        if (clave === "" || confirmarClave === "" || correo === "") {
+        setCargando(true);
+        if (correo === "") {
             Alert.alert("Campos incompletos ☹️", "Debes rellenar todos los campos")
-
+            setCargando(false);
             return;
         }
 
-        if (clave !== confirmarClave) {
-            Alert.alert("Error no coinciden 😣", "Las contraseñas no coinciden")
-
-            return;
-        }
-
-        if (clave.length < 6 || confirmarClave.length < 6) {
-            Alert.alert("Error minimo no alcanzado 😰", "La contraseña debe tener minimo 6 caracteres")
-
-            return;
-        }
 
 
         try {
 
-            const response = await olvideMiClave(rol, clave, correo);
+            const response = await enviarCodigoDeVerificacion(correo);
             if (!response.success) {
-                Alert.alert("Error cambio de clave ☹️", response.message)
+                Alert.alert("Error al enviar codigo ❌", response.message)
+                setCargando(false);
                 return;
             }
-            Alert.alert("Cambio de clave exitoso 🫡", response.message)
-            navigation.navigate("Login");
+            Alert.alert("Codigo enviado ✅", response.message)
+           
+            navigation.navigate("VerificarCodigo", { correo: correo });
+             setCargando(true);
         } catch (error) {
-            Alert.alert("Error al cambiar la contraseña", error.message)
+            Alert.alert("Error inesperado ❌", error.message)
         }
     }
 
@@ -55,9 +46,9 @@ export default function Cambiar_clave({ navigation }) {
         >
             < ScrollView contentContainerStyle={styles.scroll}>
                 <View style={styles.container}>
-                    <FlashMessage position="top" />
+              
                     <View style={styles.form}>
-                        <Text style={styles.title}>Olvideo mi clave 🔐</Text>
+                        <Text style={styles.title}>Enviar codigo de verficacion 📧</Text>
                         <TextInput
                             style={styles.input}
                             placeholder="Correo"
@@ -66,26 +57,10 @@ export default function Cambiar_clave({ navigation }) {
                             value={correo}
                             onChangeText={setCorreo}
                         />
-                        <TextInput
-                            style={styles.input}
-                            placeholder="Nueva Contraseña"
-                            placeholderTextColor="#94a3b8"
-                            secureTextEntry
-                            value={clave}
-                            onChangeText={setClave}
-                        />
 
-                        <TextInput
-                            style={styles.input}
-                            placeholder="Confirmar nueva contraseña"
-                            placeholderTextColor="#94a3b8"
-                            secureTextEntry
-                            value={confirmarClave}
-                            onChangeText={setConfirmarClave}
-                        />
                     </View>
-                    <TouchableOpacity style={styles.registerBtn} onPress={enviarForm}>
-                        <Text style={styles.registerText}>Cambiar clave</Text>
+                    <TouchableOpacity style={styles.registerBtn} disabled={cargando} onPress={enviarForm}>
+                        <Text style={styles.registerText}>Enviar codigo</Text>
                     </TouchableOpacity>
                 </View>
             </ScrollView>
@@ -116,6 +91,7 @@ const styles = StyleSheet.create({
         backgroundColor: "#1e293b",
         padding: 20,
         borderRadius: 10,
+        marginBottom:30
     },
     select: {
         backgroundColor: "#334155",

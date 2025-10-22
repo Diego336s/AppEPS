@@ -373,6 +373,46 @@ export const registrarPaciente = async (
 };
 
 
+export const enviarCodigoDeVerificacion = async(email) =>{
+  try {
+        const response = await api.post("/enviar/codigoVerificacion",{email}); 
+        if (!response.data.success) {
+            console.error("Error al enviar codigo", response.data);
+            return { success: false, message: response.data?.message }
+            
+        }
+        
+        return { success: true, message: response.data?.message}
+
+    } catch (error) {
+        console.error("Error", error.message)
+        return {
+            success: false,
+            message: error?.response?.data?.message || "Error de conexion con el servidor",
+            status: error?.response?.status || 500
+        };
+    }
+}
+
+
+
+export const verificarCodigo = async(correo, codigo) =>{
+  try {
+        const response = await api.post("/verificar/codigo",{correo, codigo}); 
+        if (!response.data.success) {
+            return { success: false, message: response.data.message }
+        }
+        return { success: true, message: response.data.message}
+    } catch (error) {
+       
+        return {
+            success: false,
+            message: error?.response?.data?.message || "Error de conexion con el servidor",
+            status: error?.response?.status || 500
+        };
+    }
+}
+
 
 export const olvideMiClave = async (rol, clave, correo) => {
     
@@ -409,7 +449,7 @@ export const olvideMiClave = async (rol, clave, correo) => {
         console.error("Error", error.message)
         return {
             success: false,
-            message: error?.response?.data?.message || "Error al reprogramar la cita",
+            message: error?.response?.data?.message || "Error de conexion con el servidor",
             status: error?.response?.status || 500
         };
     }

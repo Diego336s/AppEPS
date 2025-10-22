@@ -5,6 +5,7 @@ import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert } from "rea
 import { Ionicons, MaterialIcons, FontAwesome5 } from "@expo/vector-icons";
 import { cargarCitasConfirmadasPorPaciente } from "../../Src/Services/PacientesService";
 import FlashMessage, { showMessage } from "react-native-flash-message";
+import { useFocusEffect } from "@react-navigation/native";
 
 
 export default function DashboardScreen({ navigation }) {
@@ -37,68 +38,71 @@ export default function DashboardScreen({ navigation }) {
     CargarPerfil();
   }, []);
 
-   const cargarCitas = async () => {
-      if (!usuario?.user?.documento) return;
-      try {
-        const response = await cargarCitasConfirmadasPorPaciente(usuario.user.documento);
-        if (response.message) {
-          setNohayCitas(true);
-          setCitas([]);
-          return;
-        }
-        setCitas(response.citas);
-        setNohayCitas(false);
-        
-
-
-      } catch (error) {
-        const mensaje =
-          error?.response?.data?.message ||
-          error?.message ||
-          "Error interno, intente más tarde";
-        Alert.alert("Error", mensaje);
+  const cargarCitas = async () => {
+    if (!usuario?.user?.documento) return;
+    try {
+      const response = await cargarCitasConfirmadasPorPaciente(usuario.user.documento);
+      if (response.message) {
+        setNohayCitas(true);
+        setCitas([]);
+        return;
       }
+      setCitas(response.citas);
+      setNohayCitas(false);
 
-    };
+
+
+    } catch (error) {
+      const mensaje =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Error interno, intente más tarde";
+      Alert.alert("Error", mensaje);
+    }
+
+  };
 
 
   useEffect(() => {
-   
     cargarCitas();
-
-    const citasEsteMes = async () => {
-      if (!usuario?.user?.id) return;
-      const id = usuario?.user?.id;
-      try {
-        const response = await api.get("citasEsteMesPorPaciente/" + id);
-        setCitasEsteMes(response.data.citas);
-      } catch (error) {
-        const mensaje =
-          error?.response?.data?.message ||
-          error?.message ||
-          "Error interno, intente más tarde";
-        Alert.alert("Error", mensaje);
-      }
-    }
-    citasEsteMes();
-
-    const totalCitas = async () => {
-      if (!usuario?.user?.id) return;
-      const id = usuario?.user?.id;
-      try {
-        const response = await api.get("totalCitasPorPaciente/" + id);
-        setTotalCita(response.data.citas);
-      } catch (error) {
-        const mensaje =
-          error?.response?.data?.message ||
-          error?.message ||
-          "Error interno, intente más tarde";
-        Alert.alert("Error", mensaje);
-      }
-    }
-    totalCitas();
   }, [usuario]);
 
+  const totalCitas = async () => {
+    if (!usuario?.user?.id) return;
+    const id = usuario?.user?.id;
+    try {
+      const response = await api.get("totalCitasPorPaciente/" + id);
+      setTotalCita(response.data.citas);
+    } catch (error) {
+      const mensaje =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Error interno, intente más tarde";
+      Alert.alert("Error", mensaje);
+    }
+  }
+
+
+  const citasEsteMesPaciente = async () => {
+    if (!usuario?.user?.id) return;
+    const id = usuario?.user?.id;
+    try {
+      const response = await api.get("citasEsteMesPorPaciente/" + id);
+      setCitasEsteMes(response.data.citas);
+    } catch (error) {
+      const mensaje =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Error interno, intente más tarde";
+      Alert.alert("Error", mensaje);
+    }
+  }
+  useFocusEffect(
+    React.useCallback(() => {
+      citasEsteMesPaciente();
+      totalCitas();
+    }, [usuario])
+  );
   const alertaCancelarCita = (id) => {
 
     Alert.alert(
@@ -137,11 +141,7 @@ export default function DashboardScreen({ navigation }) {
         Alert.alert("Error ❌", response?.data.message || "Error al intentar cancelar la cita")
       }
 
-      showMessage({
-        message: "Cita cancelada 🫡",
-        description: "Su cita ha sido cancelada exitosamente",
-        type: "success"
-      });
+      Alert.alert("Cita cancelada 🫡", "Su cita ha sido cancelada exitosamente");      
       cargarCitas();
 
     } catch (error) {
@@ -156,7 +156,7 @@ export default function DashboardScreen({ navigation }) {
 
   return (
     <ScrollView style={styles.container}>
-      <FlashMessage position="top" />
+     
       {/* Header */}
       <View style={styles.header}>
         <Ionicons name="person-circle" size={50} color="white" />
@@ -268,7 +268,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   summaryRow: {
-    flexDirection: "row",
+    flexDirection: "row-reverse",
     justifyContent: "space-between",
   },
   summaryCard: {

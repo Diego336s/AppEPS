@@ -7,7 +7,7 @@ import api from "../../Src/Services/Conexion";
 export default function HistorialMedico() {
   const [usuario, setUsuario] = useState(null);
   const [citas, setCitas] = useState([]);
-  const [mensaje, setMensaje] = useState(null);
+ 
   const [searchText, setSearchText] = useState(""); // 👈 Estado para el filtro
 
   useEffect(() => {
@@ -35,7 +35,7 @@ export default function HistorialMedico() {
       try {
         const response = await cargarCitasPorPaciente(usuario.user.documento);
         if (response.message) {
-          setMensaje(response.message);
+          
           setCitas([]);
           return;
         }
@@ -73,7 +73,7 @@ export default function HistorialMedico() {
       />
 
       <ScrollView>
-        {mensaje && <Text style={{ color: "white" }}>{mensaje}</Text>}
+        
         {filteredCitas.length > 0 ? (
           filteredCitas.map((item, index) => (
             <View key={index} style={styles.card}>

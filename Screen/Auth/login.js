@@ -57,7 +57,7 @@ export default function Login({ navigation }) {
         } else {
           Alert.alert("Error de Login", response?.message || "ocurrio un error al inicar sesion",);
         }
-      }else if (userType === "Administradores") {
+      } else if (userType === "Administradores") {
         const response = await loginAdmin(correo, clave);
         if (response.success) {
           showMessage({
@@ -68,7 +68,7 @@ export default function Login({ navigation }) {
         } else {
           Alert.alert("Error de Login", response?.message || "ocurrio un error al inicar sesion",);
         }
-      }else if (userType === "Doctor") {
+      } else if (userType === "Doctor") {
         const response = await loginDoctor(correo, clave);
         if (response.success) {
           showMessage({
@@ -212,7 +212,7 @@ export default function Login({ navigation }) {
                 onChangeText={setClave}
               />
 
-              <TouchableOpacity onPress={()=>navigation.navigate("OlvideClave", {rol:userType})}>
+              <TouchableOpacity onPress={() => navigation.navigate("OlvideClaveStack", { rol: userType })}>
                 <Text style={styles.forgot}>¿Olvidaste tu contraseña?</Text>
               </TouchableOpacity>
 
@@ -251,14 +251,16 @@ const styles = StyleSheet.create({
     alignItems: "center",   // Centra verticalmente
     gap: 8,                 // Espacio entre icono y texto (en RN 0.71+)
   },
-  scroll: {
-    flexGrow: 1,
-    justifyContent: "center",
-    backgroundColor: "#0f172a"
-  },
+
   container: {
     flex: 1,
     padding: 50,
+   
+  },
+     scroll: {
+    flexGrow: 1,
+    justifyContent: "center",
+    backgroundColor: "#0f172a"
   },
   title: {
     paddingTop: 5,

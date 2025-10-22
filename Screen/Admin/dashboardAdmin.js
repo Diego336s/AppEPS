@@ -40,22 +40,22 @@ export default function DashboardScreen({ navigation }) {
 
   useEffect(() => {
     const cargarTotalMedicos = async () => {
-          try {
-            const response = await api.get("totalMedicos");
-            setTotalMedicos(response.data.total);
-          } catch (error) {
-            Alert.alert(error.response.data.message || "Error al contar los medicos")
-          }
+      try {
+        const response = await api.get("totalMedicos");
+        setTotalMedicos(response.data.total);
+      } catch (error) {
+        Alert.alert(error.response.data.message || "Error al contar los medicos")
+      }
     }
     cargarTotalMedicos();
 
     const cargarTotalEspecialidades = async () => {
-          try {
-            const response = await api.get("totalEspecialidades");
-            setTotalEspecialidades(response.data.total);
-          } catch (error) {
-            Alert.alert(error.response.data.message || "Error al contar los medicos")
-          }
+      try {
+        const response = await api.get("totalEspecialidades");
+        setTotalEspecialidades(response.data.total);
+      } catch (error) {
+        Alert.alert(error.response.data.message || "Error al contar los medicos")
+      }
     }
     cargarTotalEspecialidades();
   }, [])

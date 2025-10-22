@@ -46,6 +46,12 @@ export default function NuevaCitaScreen({ navigation }) {
     hideDatePicker();
   };
 
+  // Calcular mañana a las 00:00
+  const mañana = new Date();
+  mañana.setDate(mañana.getDate() + 1);
+  mañana.setHours(0, 0, 0, 0);
+
+
   // Picker Hora
   const [show, setShow] = useState(false);
 
@@ -262,8 +268,10 @@ export default function NuevaCitaScreen({ navigation }) {
               mode="date"
               onConfirm={handleConfirm}
               onCancel={hideDatePicker}
-              minimumDate={new Date()}
+              minimumDate={mañana} // ✅ Desde mañana a las 00:00
             />
+
+
 
             <TouchableOpacity onPress={() => setShow(true)}>
               <TextInput

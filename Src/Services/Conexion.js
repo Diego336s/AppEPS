@@ -12,6 +12,8 @@ const api = axios.create({
 });
 
 const RutasPublicas = [
+    "/enviar/codigoVerificacion",
+    "/verificar/codigo",
     "/loginPaciente",
     "/loginRecepcionista",
     "/loginMedico",

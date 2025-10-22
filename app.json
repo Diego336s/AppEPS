@@ -1,14 +1,14 @@
 {
   "expo": {
     "name": "AppEps",
-    "slug": "AppEps",
+    "slug": "appeps",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/iconoApp.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/iconoApp.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -16,14 +16,24 @@
       "supportsTablet": true
     },
     "android": {
+      "useNextNotificationsApi": true,
+      "intentFilters": [],
+      "permission": [],
+      "usesCleartextTraffic": true,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.diego336.AppEps"
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "3366e720-c42a-48b2-aa0e-c87996242202"
+      }
     }
   }
 }
