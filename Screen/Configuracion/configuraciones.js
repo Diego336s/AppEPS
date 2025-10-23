@@ -52,56 +52,7 @@ export default function ConfiguracionesScreen({ navigation }) {
     }
   }
 
-  const programarNotificacion = async () => {
-    const { status } = await Notificaciones.getPermissionsAsync();
-    const preferencia = await AsyncStorage.getItem("notificaciones_activas");
-    if (status !== "granted" || preferencia !== "true") {
-      Alert.alert("Notificaciones 🔔", "No tienes permisos para recibir notificaciones");
-      return;
-    }
-
-
-    try {
-      await Notificaciones.scheduleNotificationAsync({
-        content: {
-          title: "Notificaciones programadas",
-          body: "Esta es una notificacion para 2 mnutos despues."
-        },
-        trigger: {
-          type: "date",
-          date: new Date(Date.now() + (2 * 60 * 1000)), // se dispara en 2 min
-        },
-      });
-      Alert.alert("Notificaciones 🔔", "Notificacion programa para 2 minutos despues");
-    } catch (error) {
-      Alert.alert("Error al programar la notificacion");
-    }
-  }
-  const programarRecurrente = async () => {
-    const { status } = await Notificaciones.getPermissionsAsync();
-    const preferencia = await AsyncStorage.getItem("notificaciones_activas");
-
-    if (status !== "granted" || preferencia !== "true") {
-      Alert.alert("Notificaciones 🔔", "No tienes permisos para recibir notificaciones");
-      return;
-    }
-    try {
-      await Notificaciones.scheduleNotificationAsync({
-        content: {
-          title: "Notificaciones programadas",
-          body: "Esta es una notificacion para 10 segundos despues."
-        },
-        trigger: {
-          type: "date",
-          date: new Date(Date.now() + 10000), // se dispara en 10 segundos
-        },
-      });
-      Alert.alert("Notificaciones 🔔", "Notificacion programa para 10 segundos despues");
-    } catch (error) {
-      Alert.alert("Error al programar la notificacion");
-    }
-
-  }
+  
   const cerrarSesion = async () => {
     switch (rol) {
       case "Paciente":
@@ -149,9 +100,7 @@ export default function ConfiguracionesScreen({ navigation }) {
             thumbColor={permisoNotificaciones ? "#3b82f6" : "#888"}
             trackColor={{ false: "#555", true: "#2563eb" }}
           />
-        </View>
-        <Button title="Programar notificaciones en 2 min" onPress={programarNotificacion} />
-        <Button title="Programar notificaciones en 10 segundo" onPress={programarRecurrente} />
+        </View>       
       </View>
 
 

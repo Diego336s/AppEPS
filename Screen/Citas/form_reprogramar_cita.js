@@ -268,7 +268,7 @@ export default function ReprogramarCita({ navigation }) {
                     <View style={styles.card}>
                         <Text style={styles.stepTitle}>4. Confirmar</Text>
                         <Text style={styles.confirmText}>
-                            Paciente: {usuario?.user.nombre + " " + usuario?.user.apellido || "-"} {"\n"}
+                            Paciente: {usuario?.user?.nombre + " " + usuario?.user?.apellido || "-"} {"\n"}
                             Fecha: {fecha || "-"} {"\n"}
                             Hora:{" "}
                             {hora

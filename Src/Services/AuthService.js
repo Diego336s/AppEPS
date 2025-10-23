@@ -356,6 +356,7 @@ export const registrarPaciente = async (
         console.log("Token recibido:", token);
         if (token) {
             await AsyncStorage.setItem("userToken", token);
+            await AsyncStorage.setItem("rolUser", "Paciente");
         } else {
             console.error("No se recibio el token en la respuesta");
         }

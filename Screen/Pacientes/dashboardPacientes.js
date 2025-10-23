@@ -109,10 +109,14 @@ export default function DashboardScreen({ navigation }) {
         Alert.alert("Error al programar la notificacion");
       }
     }
-  useEffect(() => {    if (!citas) return;
+  useEffect(() => {  
+    if(noHaycitas === true) return;
+    
+     programarNotificacion();
+  
    
-    programarNotificacion();
-  }, [citas])
+    
+  }, [noHaycitas])
 
   const citasEsteMesPaciente = async () => {
     if (!usuario?.user?.id) return;

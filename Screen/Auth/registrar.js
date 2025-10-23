@@ -30,9 +30,9 @@ export default function RegisterPatientScreen({ navigation }) {
   const [clave, setClave] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
- 
 
-   const paises = [
+
+  const paises = [
     "Afganistán", "Albania", "Alemania", "Andorra", "Angola", "Antigua y Barbuda",
     "Arabia Saudita", "Argelia", "Argentina", "Armenia", "Australia", "Austria",
     "Azerbaiyán", "Bahamas", "Bangladés", "Barbados", "Baréin", "Bélgica", "Belice",
@@ -66,9 +66,9 @@ export default function RegisterPatientScreen({ navigation }) {
     "Yemen", "Yibuti", "Zambia", "Zimbabue"
   ];
 
-   const tipos = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
+  const tipos = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 
-    // Date Picker
+  // Date Picker
   const showDatePicker = () => setDatePickerVisibility(true);
   const hideDatePicker = () => setDatePickerVisibility(false);
 
@@ -78,206 +78,190 @@ export default function RegisterPatientScreen({ navigation }) {
       "-" +
       (date.getMonth() + 1).toString().padStart(2, "0") +
       "-" +
-     date.getDate().toString().padStart(2, "0");
-      
+      date.getDate().toString().padStart(2, "0");
+
     setFechaNacimiento(fDate);
     hideDatePicker();
   };
-  const enviarForm = async()=>{
-       if(!nombre || !apellido || !documento || !telefono || !fecha_nacimiento || !sexo || !nacionalidad || !rh || !correo || !clave || !confirmPassword){
-     
-       showMessage({
-        message:"Error ☹️",
-        description: "Debes completar todos los campos 😰",
-        type: "danger"
-      });
+  const enviarForm = async () => {
+    if (!nombre || !apellido || !documento || !telefono || !fecha_nacimiento || !sexo || !nacionalidad || !rh || !correo || !clave || !confirmPassword) {
+      Alert.alert("Error formulario☹️", "Debes completar todos los campos 😰");
       return;
     }
 
-    if(clave !== confirmPassword){
-      showMessage({
-        message:"Error 🔒",
-        description: "Las contraseñas no coninciden 😰",
-        type: "danger"
-      });
+    if (clave !== confirmPassword) {
+      Alert.alert("Error contraseña🔒", "Las contraseñas no coninciden 😰")
+
       return;
     }
 
-     if(!clave.length >= 6 &&  !confirmPassword.length >= 6){
-      showMessage({
-        message:"Error 🔒",
-        description: "Las contraseña debe tener minimo 6 caracteres 😰",
-        type: "danger"
-      });
-      
+    if (!clave.length >= 6 && !confirmPassword.length >= 6) {
+      Alert.alert("Error contraseña🔒", "La contraseña debe tener minimo 6 caracteres 😰");
+
       return;
     }
-    if(telefono.length !== 10){
-       showMessage({
-        message:"Error 📞",
-        description: "El numero de telefono esta mal 😰",
-        type: "danger"
-      });
-      
+    if (telefono.length !== 10) {
+      Alert.alert("Error Telefono 📞", "El numero de telefono esta mal debe tener 10 digitos 😰");   
+
       return;
     }
 
- 
 
-   
+
+
     try {
-       const result = await registrarPaciente(nombre, apellido, documento, telefono,  fecha_nacimiento,  rh, sexo, nacionalidad,  correo, clave);
-    if(result.success){
-      Alert.alert(result.message);
-    }
+      const result = await registrarPaciente(nombre, apellido, documento, telefono, fecha_nacimiento, rh, sexo, nacionalidad, correo, clave);
+      if (result.success) {
+        Alert.alert("Registro exitoso ✅", result.message);
+      }
     } catch (error) {
       Alert.alert("Error al registrar", result.message || "Ocurrio un error al registrar")
     }
-   
+
   }
 
   return (
-    
+
     <KeyboardAvoidingView
-  behavior={Platform.OS === "ios" ? "padding" : "height"}
-  style={{ flex: 1 }}
-  >
- <ScrollView contentContainerStyle={styles.scroll}>
-  <View style={styles.container}>
-      <Text style={styles.title}>Registro de Paciente</Text>
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      style={{ flex: 1 }}
+    >
+      <ScrollView contentContainerStyle={styles.scroll}>
+        <View style={styles.container}>
+          <Text style={styles.title}>Registro de Paciente</Text>
 
-      <View style={styles.form}>
-        <TextInput
-          style={styles.input}
-          placeholder="Nombre"
-          placeholderTextColor="#94a3b8"
-          value={nombre}
-          onChangeText={setNombre}
-        />
+          <View style={styles.form}>
+            <TextInput
+              style={styles.input}
+              placeholder="Nombre"
+              placeholderTextColor="#94a3b8"
+              value={nombre}
+              onChangeText={setNombre}
+            />
 
-        <TextInput
-          style={styles.input}
-          placeholder="Apellido"
-          placeholderTextColor="#94a3b8"
-          value={apellido}
-          onChangeText={setApellido}
-        />
+            <TextInput
+              style={styles.input}
+              placeholder="Apellido"
+              placeholderTextColor="#94a3b8"
+              value={apellido}
+              onChangeText={setApellido}
+            />
 
-       
-        <TextInput
-          style={styles.input}
-          placeholder="Número de documento"
-          placeholderTextColor="#94a3b8"
-          value={documento}
-          keyboardType="numeric"
-          onChangeText={setDocumento}
-        />
 
-        <TextInput
-          style={styles.input}
-          placeholder="Teléfono"
-          placeholderTextColor="#94a3b8"
-          value={telefono}
-          keyboardType="phone-pad"
-          onChangeText={setTelefono}
-        />
+            <TextInput
+              style={styles.input}
+              placeholder="Número de documento"
+              placeholderTextColor="#94a3b8"
+              value={documento}
+              keyboardType="numeric"
+              onChangeText={setDocumento}
+            />
 
-        {/* FECHA DE NACIMIENTO */}
-        <TouchableOpacity onPress={showDatePicker}>
-          <TextInput
-            style={styles.input}
-            placeholder="Fecha de nacimiento"
-            placeholderTextColor="#94a3b8"
-            value={fecha_nacimiento}
-            editable={false}
-          />
-        </TouchableOpacity>
+            <TextInput
+              style={styles.input}
+              placeholder="Teléfono"
+              placeholderTextColor="#94a3b8"
+              value={telefono}
+              keyboardType="phone-pad"
+              onChangeText={setTelefono}
+            />
 
-        <DateTimePickerModal
-          isVisible={isDatePickerVisible}
-          mode="date"
-          onConfirm={handleConfirm}
-          onCancel={hideDatePicker}
-        />
+            {/* FECHA DE NACIMIENTO */}
+            <TouchableOpacity onPress={showDatePicker}>
+              <TextInput
+                style={styles.input}
+                placeholder="Fecha de nacimiento"
+                placeholderTextColor="#94a3b8"
+                value={fecha_nacimiento}
+                editable={false}
+              />
+            </TouchableOpacity>
 
-     
-      <Picker selectedValue={sexo}
-       style={styles.select}
-       onValueChange={(itemValue)=> setSexo(itemValue)
-       }>
-         <Picker.Item label="-- Selecciona el sexo --" value=""/>
-        <Picker.Item label="Masculino" value="M"/>
-        <Picker.Item label="Femenino" value="F"/>
-       </Picker>
+            <DateTimePickerModal
+              isVisible={isDatePickerVisible}
+              mode="date"
+              onConfirm={handleConfirm}
+              onCancel={hideDatePicker}
+            />
 
- 
-<Picker
-        selectedValue={nacionalidad}
-        style={styles.select}
-        onValueChange={(itemValue) => setNacionalidad(itemValue)}
-      >
-        <Picker.Item label="-- Selecciona un país --" value="" />
-        {paises.map((p, index) => (
-          <Picker.Item key={index} label={p} value={p} />
-        ))}
-      </Picker>
 
-       
-      <Picker
-        selectedValue={rh}
-        style={styles.select}
-        onValueChange={(itemValue) => setRh(itemValue)}
-      >
-        <Picker.Item label="-- Selecciona RH --" value="" />
-        {tipos.map((t, index) => (
-          <Picker.Item key={index} label={t} value={t} />
-        ))}
-      </Picker>
+            <Picker selectedValue={sexo}
+              style={styles.select}
+              onValueChange={(itemValue) => setSexo(itemValue)
+              }>
+              <Picker.Item label="-- Selecciona el sexo --" value="" />
+              <Picker.Item label="Masculino" value="M" />
+              <Picker.Item label="Femenino" value="F" />
+            </Picker>
 
-        <TextInput
-          style={styles.input}
-          placeholder="Correo electrónico"
-          placeholderTextColor="#94a3b8"
-          keyboardType="email-address"
-          value={correo}
-          onChangeText={setCorreo}
-        />
 
-        <TextInput
-          style={styles.input}
-          placeholder="Contraseña"
-          placeholderTextColor="#94a3b8"
-          secureTextEntry
-          value={clave}
-          onChangeText={setClave}
-        />
+            <Picker
+              selectedValue={nacionalidad}
+              style={styles.select}
+              onValueChange={(itemValue) => setNacionalidad(itemValue)}
+            >
+              <Picker.Item label="-- Selecciona un país --" value="" />
+              {paises.map((p, index) => (
+                <Picker.Item key={index} label={p} value={p} />
+              ))}
+            </Picker>
 
-        <TextInput
-          style={styles.input}
-          placeholder="Confirmar contraseña"
-          placeholderTextColor="#94a3b8"
-          secureTextEntry
-          value={confirmPassword}
-          onChangeText={setConfirmPassword}
-        />
 
-        <TouchableOpacity style={styles.registerBtn} onPress={enviarForm}>
-          <Text style={styles.registerText}>Registrar Paciente</Text>
-        </TouchableOpacity>
+            <Picker
+              selectedValue={rh}
+              style={styles.select}
+              onValueChange={(itemValue) => setRh(itemValue)}
+            >
+              <Picker.Item label="-- Selecciona RH --" value="" />
+              {tipos.map((t, index) => (
+                <Picker.Item key={index} label={t} value={t} />
+              ))}
+            </Picker>
 
-        <View style={styles.iniciarSesionBtn}>
-          <Button
-            onPress={() => navigation.navigate("Login")}
-            title="Iniciar sesión"
-          />
+            <TextInput
+              style={styles.input}
+              placeholder="Correo electrónico"
+              placeholderTextColor="#94a3b8"
+              keyboardType="email-address"
+              value={correo}
+              onChangeText={setCorreo}
+            />
+
+            <TextInput
+              style={styles.input}
+              placeholder="Contraseña"
+              placeholderTextColor="#94a3b8"
+              secureTextEntry
+              value={clave}
+              onChangeText={setClave}
+            />
+
+            <TextInput
+              style={styles.input}
+              placeholder="Confirmar contraseña"
+              placeholderTextColor="#94a3b8"
+              secureTextEntry
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+            />
+
+            <TouchableOpacity style={styles.registerBtn} onPress={enviarForm}>
+              <Text style={styles.registerText}>Registrar Paciente</Text>
+            </TouchableOpacity>
+
+            <View style={styles.iniciarSesionBtn}>
+              <Button
+                onPress={() => navigation.navigate("Login")}
+                title="Iniciar sesión"
+              />
+            </View>
+          </View>
         </View>
-      </View>
-    </View>
-    <FlashMessage position="top"/>
-</ScrollView>
-</KeyboardAvoidingView>
-    
-    
+        <FlashMessage position="top" />
+      </ScrollView>
+    </KeyboardAvoidingView>
+
+
   );
 }
 
@@ -288,7 +272,7 @@ const styles = StyleSheet.create({
     padding: 20,
     justifyContent: "center",
   },
-    scroll: {
+  scroll: {
     flexGrow: 1,
     justifyContent: "center",
     backgroundColor: "#0f172a"
@@ -305,9 +289,9 @@ const styles = StyleSheet.create({
     padding: 20,
     borderRadius: 10,
   },
-    select: {
+  select: {
     backgroundColor: "#334155",
-    color: "white",   
+    color: "white",
     borderRadius: 8,
     marginBottom: 12,
   },
