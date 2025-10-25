@@ -38,10 +38,12 @@ export default function HistorialMedico() {
     const search = searchText.toLowerCase();
     return (
       item?.fecha?.toLowerCase().includes(search) ||
+       item?.hora_inicio?.toLowerCase().includes(search) ||
       item?.nombre_medico?.toLowerCase().includes(search) ||
       item?.nombre_paciente?.toLowerCase().includes(search) ||
       item?.apellido_paciente?.toLowerCase().includes(search) ||
        item?.documento_paciente?.toLowerCase().includes(search) ||
+      
       item?.apellido_medico?.toLowerCase().includes(search) ||
       item?.especialidad?.toLowerCase().includes(search) ||
       item?.descripcion?.toLowerCase().includes(search) ||

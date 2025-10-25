@@ -8,7 +8,7 @@ import { pacientesAtendidosPorDoctor } from "../../Src/Services/MedicosService";
 export default function HistorialMedico() {
     const [usuario, setUsuario] = useState(null);
     const [citas, setCitas] = useState([]);
-    const [mensaje, setMensaje] = useState(null);
+  
     const [searchText, setSearchText] = useState(""); // 👈 Estado para el filtro
 
     useEffect(() => {
@@ -43,7 +43,7 @@ export default function HistorialMedico() {
             try {
                 const response = await pacientesAtendidosPorDoctor(usuario?.user?.id);
                 if (response.message) {
-                    setMensaje(response.message);
+                  
                     setCitas([]);
                     return;
                 }
@@ -75,14 +75,14 @@ export default function HistorialMedico() {
             {/* Buscador */}
             <TextInput
                 style={styles.searchInput}
-                placeholder="Buscar cita..."
+                placeholder="Buscar paciente..."
                 placeholderTextColor="#999"
                 value={searchText}
                 onChangeText={setSearchText} // 👈 actualiza el estado
             />
 
             <ScrollView>
-                {mensaje && <Text style={{ color: "white" }}>{mensaje}</Text>}
+              
                 {filteredCitas.length > 0 ? (
                     filteredCitas.map((item, index) => (
                         <View key={index} style={styles.card}>
@@ -101,7 +101,7 @@ export default function HistorialMedico() {
                         </View>
                     ))
                 ) : (
-                    <Text style={{ color: "white", textAlign: "center" }}>No se encontraron citas</Text>
+                    <Text style={{ color: "white", textAlign: "center" }}>No se encontraron pacientes atendidos por el doctor</Text>
                 )}
             </ScrollView>
         </View>

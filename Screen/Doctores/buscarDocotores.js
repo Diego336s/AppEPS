@@ -133,8 +133,8 @@ CargarMedicos();
           <View style={styles.card}>
             <Text style={styles.nombre}>Doc. {item.nombre} {item.apellido}</Text>
             <Text style={styles.especialidad}>{item.especialidad}</Text>
-            <Text style={styles.telefono}>{item.telefono}</Text>
-            <Text style={styles.telefono}>{item.correo}</Text>
+            <Text style={styles.telefono}>📞 {item.telefono}</Text>
+            <Text style={styles.telefono}>📧 {item.correo}</Text>
             {rol === "Admin" && (
               <View>
                 <Text style={styles.telefono}>{item.documento}</Text>
